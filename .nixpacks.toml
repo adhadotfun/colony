@@ -1,0 +1,10 @@
+providers = ["python"]
+
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = ["echo 'no dependencies, stdlib only'"]
+
+[start]
+cmd = "python3 server.py"

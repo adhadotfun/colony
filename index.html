@@ -75,13 +75,26 @@
   @media (max-width:1100px){.rail{display:none;}}
 
 
-  /* soften the paper plate: fade on both axes so no hard cut line shows over the map */
+  /* the story is a framed card, same rule and frost as the data column,
+     instead of a soft gradient wash that dissolved into the map */
   .plate{
-    background:linear-gradient(100deg,var(--paper) 0,var(--paper) 34%,rgba(250,249,246,.92) 58%,rgba(250,249,246,.55) 80%,transparent 100%);
-    -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 62%, rgba(0,0,0,.55) 84%, transparent 100%);
-            mask-image:linear-gradient(to bottom, #000 0, #000 62%, rgba(0,0,0,.55) 84%, transparent 100%);
-    padding-bottom:calc(var(--s6) + 96px);
+    background:none;
+    -webkit-mask-image:none;mask-image:none;
+    top:40px;left:40px;
+    width:min(420px, calc(100vw - 80px));
+    max-height:calc(100dvh - var(--brainbar-h) - 80px);
+    padding:0;
   }
+  .plate__inner{
+    border:1px solid var(--rule-strong);border-radius:2px;
+    background:rgba(250,249,246,.9);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    padding:20px 22px 18px;
+    box-shadow:0 1px 0 rgba(22,21,15,.03);
+  }
+  .plate .title{font-size:clamp(28px,3vw,42px);margin-bottom:var(--s3);}
+  .plate .lede{margin-bottom:var(--s4);max-width:none;}
+  .plate .boxes{margin-bottom:0;}
   /* the small frosted cards were cutting a hard rectangle out of the paper */
   .rail__list{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
         background:rgba(250,249,246,.78);}

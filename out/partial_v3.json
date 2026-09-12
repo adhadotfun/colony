@@ -1,0 +1,38 @@
+{
+  "k3": {
+    "arm_b_partial": 0.012,
+    "arm_b_partial_ci": [
+      -0.103,
+      0.121
+    ],
+    "arm_a_partial": 0.104,
+    "arm_a_partial_ci": [
+      0.031,
+      0.162
+    ]
+  },
+  "k7": {
+    "arm_b_partial": -0.02,
+    "arm_b_partial_ci": [
+      -0.156,
+      0.127
+    ],
+    "arm_a_partial": 0.136,
+    "arm_a_partial_ci": [
+      0.052,
+      0.204
+    ]
+  },
+  "k14": {
+    "arm_b_partial": -0.056,
+    "arm_b_partial_ci": [
+      -0.229,
+      0.119
+    ],
+    "arm_a_partial": 0.127,
+    "arm_a_partial_ci": [
+      0.041,
+      0.218
+    ]
+  }
+}

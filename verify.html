@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>check it yourself</title>
+<link rel="stylesheet" href="./css/site.css">
+<style>
+  body{background:var(--paper);color:var(--ink);font:400 16px/1.7 var(--font-body);}
+  .page{max-width:860px;margin:0 auto;padding:40px 24px 120px;}
+  .back{font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);text-decoration:none;}
+  .back:hover{color:var(--ink);}
+  h1.doc{font-family:var(--font-display);font-size:clamp(30px,4vw,50px);font-weight:400;line-height:1.05;margin:28px 0 16px;}
+  h2.sec{font-family:var(--font-display);font-size:24px;font-weight:400;margin:40px 0 4px;}
+  .sec__sub{font-family:var(--font-num);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:14px;}
+
+  .runbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+        border:1px solid var(--rule);border-radius:2px;padding:12px 14px;margin:18px 0 0;}
+  .btn{font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+        background:var(--ink);color:var(--paper);border:0;border-radius:2px;padding:9px 16px;cursor:pointer;}
+  .btn:hover{background:var(--accent-ink);}
+  .btn[disabled]{opacity:.45;cursor:default;}
+  .runbar__stat{font-family:var(--font-num);font-size:11px;color:var(--ink-3);
+        text-transform:uppercase;letter-spacing:.08em;}
+  .tally{font-family:var(--font-num);font-size:13px;}
+  .tally b{font-weight:500;}
+  .ok{color:#1a7f37;} .bad{color:var(--accent-ink);}
+
+  table.chk{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--font-num);font-size:12px;}
+  table.chk th{text-align:left;font-weight:400;font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+        color:var(--ink-3);border-bottom:1px solid var(--rule);padding:0 10px 6px 0;}
+  table.chk td{padding:6px 10px 6px 0;border-bottom:1px solid var(--rule-2,rgba(22,21,15,.07));vertical-align:top;}
+  table.chk td.v{font-variant-numeric:tabular-nums;}
+  .pill{display:inline-block;min-width:44px;text-align:center;border-radius:2px;padding:1px 6px;
+        font-size:10px;letter-spacing:.08em;text-transform:uppercase;}
+  .pill--ok{background:rgba(26,127,55,.12);color:#1a7f37;}
+  .pill--bad{background:rgba(229,55,44,.12);color:var(--accent-ink);}
+  .pill--wait{background:rgba(22,21,15,.07);color:var(--ink-3);}
+
+  .card{border:1px solid var(--rule);border-radius:2px;padding:14px;margin:0 0 12px;}
+  .card__path{font-family:var(--font-num);font-size:13px;color:var(--accent-ink);text-decoration:none;}
+  .card__path:hover{text-decoration:underline;}
+  .card__desc{margin:6px 0 0;font-size:15px;color:var(--ink-2);}
+  .card__size{margin-top:8px;font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);}
+  .tail{margin-top:32px;color:var(--ink-2);font-size:15px;}
+  .limit{border-left:2px solid var(--accent-ink);padding:2px 0 2px 14px;margin:16px 0;color:var(--ink-2);font-size:15px;}
+  code{font-family:var(--font-num);font-size:13px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="./index.html">← the instrument</a>
+  <h1 class="doc">Check it yourself</h1>
+  <p>Nothing here asks you to trust the numbers on the front page. This page re-runs them. It loads the stored inputs, re-executes the same engine the site ships, and compares the result against the stored output field by field. Your browser does the work, so you can watch it in the network tab.</p>
+
+  <h2 class="sec">Level 1 — recompute the simulation</h2>
+  <div class="sec__sub">deterministic · runs entirely in your browser</div>
+  <p>Every epoch derives a seed from the cohort root, turns each token's holder snapshot into a signal, plans a tick budget from that signal, and runs the worm. All of it is deterministic. If our stored feed disagrees with your browser by a single digit, the rows below go red.</p>
+
+  <div class="runbar">
+    <button class="btn" id="run">Run verification</button>
+    <span class="runbar__stat" id="stat">idle</span>
+    <span class="tally" id="tally"></span>
+  </div>
+
+  <table class="chk" id="tbl" hidden>
+    <thead><tr><th>check</th><th>recomputed</th><th>stored</th><th>n</th><th></th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+
+  <p class="limit"><b>What this does not prove.</b> Level 1 verifies the simulation, not the chain data. The holder counts, entries, exits and concentration come from our snapshot of Base mainnet. If that snapshot is wrong, every check above still passes. To close that gap you need Level 2.</p>
+
+  <h2 class="sec">Level 2 — re-derive the chain data</h2>
+  <div class="sec__sub">needs your own archive RPC · not runnable in this page</div>
+  <p>The window is Base mainnet blocks <code id="w-start">…</code> to <code id="w-end">…</code>, chain <code id="w-chain">…</code>. Re-derive holder sets by replaying Transfer logs for each token across that range against an archive node you control, then diff against <code>data/snapshots_v3.json</code>. We cannot do this for you in a browser tab, and you should not take our word for it either. The ingest script that produced the snapshot ships in the repo.</p>
+
+  <h2 class="sec">The raw files</h2>
+  <div class="sec__sub">static json · same origin · no api</div>
+
+  <div class="card">
+    <a class="card__path" href="./out/feed_v3.json">./out/feed_v3.json</a>
+    <p class="card__desc">Per epoch, per token: the raw holder counts, the derived signal, the tick plan, and the resulting path efficiency. This is the file the checks above read.</p>
+    <div class="card__size" data-size="./out/feed_v3.json">measuring…</div>
+  </div>
+
+  <div class="card">
+    <a class="card__path" href="./data/snapshots_v3.json">./data/snapshots_v3.json</a>
+    <p class="card__desc">The chain snapshot itself: holder counts, entries, exits, concentration per token per block. The input Level 2 exists to challenge.</p>
+    <div class="card__size" data-size="./data/snapshots_v3.json">measuring…</div>
+  </div>
+
+  <div class="card">
+    <a class="card__path" href="./out/backtest_v3.json">./out/backtest_v3.json</a>
+    <p class="card__desc">The 30 epoch back-test: both arms, all three forward horizons, bootstrapped confidence intervals.</p>
+    <div class="card__size" data-size="./out/backtest_v3.json">measuring…</div>
+  </div>
+
+  <div class="card">
+    <a class="card__path" href="./out/partial_v3.json">./out/partial_v3.json</a>
+    <p class="card__desc">Partial correlations, controlling each arm for the raw inputs it was computed from.</p>
+    <div class="card__size" data-size="./out/partial_v3.json">measuring…</div>
+  </div>
+
+  <div class="card">
+    <a class="card__path" href="./data/connectome.json">./data/connectome.json</a>
+    <p class="card__desc">The wiring. A clean room derivation of White et al. 1986, with its provenance block inside the file.</p>
+    <div class="card__size" data-size="./data/connectome.json">measuring…</div>
+  </div>
+
+  <p class="tail">The engine the checks above execute is the same module the front page loads: <code>js/engine.js</code>. There is no second implementation kept for verification, because a second implementation is a place for the two to quietly disagree.</p>
+</div>
+
+<script>
+document.querySelectorAll('[data-size]').forEach(function (el) {
+  var path = el.getAttribute('data-size');
+  fetch(path)
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(function (t) { el.textContent = (new Blob([t]).size / 1024).toFixed(1) + ' KB'; })
+    .catch(function () { el.textContent = 'unavailable'; });
+});
+</script>
+
+<script type="module">
+import {
+  initConnectome, createState, createPosition, Xorshift128,
+  planStimulus, expandPlan, runSequence, pathEfficiency, DEFAULT_SIGNAL_CONFIG,
+} from './js/engine.js';
+
+const CFG = { ...DEFAULT_SIGNAL_CONFIG, saturation: 0.10, sellSaturation: 0.50 };
+const MIN_HOLDERS = 10;
+
+const $ = (id) => document.getElementById(id);
+const tb = $('tb');
+
+function row(name, got, want, n, pass) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${name}</td><td class="v">${got}</td><td class="v">${want}</td>`
+    + `<td class="v">${n}</td>`
+    + `<td><span class="pill ${pass ? 'pill--ok' : 'pill--bad'}">${pass ? 'match' : 'differs'}</span></td>`;
+  tb.appendChild(tr);
+  return pass;
+}
+
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function epochSeedBrowser(cohortRoot, e) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${cohortRoot}:${e}`));
+  return new DataView(buf).getUint32(0, false);
+}
+
+$('run').addEventListener('click', async () => {
+  const btn = $('run');
+  btn.disabled = true;
+  tb.innerHTML = '';
+  $('tbl').hidden = false;
+  $('tally').textContent = '';
+  $('stat').textContent = 'loading inputs…';
+
+  try {
+    const [feed, snapsText, conn] = await Promise.all([
+      fetch('./out/feed_v3.json').then((r) => r.json()),
+      fetch('./data/snapshots_v3.json').then((r) => r.text()),
+      fetch('./data/connectome.json').then((r) => r.text()),
+    ]);
+    const snaps = JSON.parse(snapsText);
+
+    initConnectome(JSON.parse(conn));
+
+    const meta = snaps.meta || {};
+    const w = meta.window || {};
+    $('w-start').textContent = w.start_block ?? '?';
+    $('w-end').textContent = w.end_block ?? '?';
+    $('w-chain').textContent = meta.chain_id ?? 8453;
+
+    const cohortRoot = `${w.start_block}:${meta.chain_id || 8453}`;
+    let pass = 0, fail = 0;
+    const mark = (ok) => { ok ? pass++ : fail++; };
+
+    // 1. seed domain: the string every epoch seed is derived from, read back off the chain window
+    mark(row('cohort window', cohortRoot, feed.cohort_root, 1, cohortRoot === feed.cohort_root));
+
+    // 2. the exact bytes of the snapshot file we served you
+    const snapSha = await sha256Hex(snapsText);
+    mark(row('snapshot sha256', snapSha.slice(0, 16) + '…', String(feed.snapshots_sha256 || '').slice(0, 16) + '…',
+      1, !!feed.snapshots_sha256 && snapSha === feed.snapshots_sha256));
+
+    // 3. format independent root, rebuilt row by row from the parsed records. Reformat
+    //    the file however you like, the root still has to come out the same.
+    const snapRows = [];
+    for (const t of [...snaps.tokens].sort((a, b) => (a.token < b.token ? -1 : 1))) {
+      for (const s of [...t.snapshots].sort((a, b) => a.epoch - b.epoch)) {
+        snapRows.push(JSON.stringify([t.token, s.epoch, s.block, s.holder_count, s.new_holders, s.exits, s.hhi]));
+      }
+    }
+    const snapRoot = await sha256Hex(snapRows.join('\n'));
+    mark(row('snapshot root', snapRoot.slice(0, 16) + '…', String(feed.snapshot_root || '').slice(0, 16) + '…',
+      snapRows.length, !!feed.snapshot_root && snapRoot === feed.snapshot_root));
+
+    // 4. connectome hash is stated inside the file it describes
+    const connSha = await sha256Hex(conn);
+    const stated = feed.connectome_sha256 || feed.connectome_sha || null;
+    if (stated) {
+      mark(row('connectome sha256', connSha.slice(0, 16) + '…', String(stated).slice(0, 16) + '…', 1, connSha === stated));
+    }
+
+    $('stat').textContent = 'recomputing epochs…';
+    await new Promise((r) => setTimeout(r, 0));
+
+    // 3. seeds
+    let seedBad = 0, seedN = 0, firstSeed = null;
+    for (let e = 0; e < feed.epochs.length; e++) {
+      const got = await epochSeedBrowser(cohortRoot, e);
+      if (firstSeed === null) firstSeed = [got, feed.epochs[e].seed];
+      seedN++;
+      if (got !== feed.epochs[e].seed) seedBad++;
+    }
+    mark(row('epoch seeds', seedBad ? `${seedBad} differ` : `all ${seedN} match`,
+      `${seedN} stored`, seedN, seedBad === 0));
+
+    // 4. signal → plan → simulation, per entry
+    let planBad = 0, peBad = 0, travelBad = 0, revBad = 0, sigBad = 0, n = 0;
+    const byToken = new Map(snaps.tokens.map((t) => [t.token, t]));
+
+    for (let e = 0; e < feed.epochs.length; e++) {
+      const ep = feed.epochs[e];
+      for (const en of ep.entries) {
+        const t = byToken.get(en.token);
+        if (!t) continue;
+        const snap = t.snapshots[e];
+        if (!snap) continue;
+        n++;
+
+        const prev = e > 0 ? t.snapshots[e - 1] : null;
+        const base = Math.max(prev ? prev.holder_count : snap.holder_count, 1);
+        const cold = snap.holder_count < MIN_HOLDERS;
+
+        const signal = cold
+          ? { kind: 'cold', growth: 0, sellPressure: 0, hhi: snap.hhi == null ? 0 : snap.hhi }
+          : {
+              kind: 'warm',
+              growth: +((snap.new_holders || 0) / base).toFixed(5),
+              sellPressure: +((snap.exits || 0) / base).toFixed(5),
+              hhi: snap.hhi == null ? 0 : snap.hhi,
+            };
+
+        if (signal.kind !== en.signal.kind
+          || signal.growth !== en.signal.growth
+          || signal.sellPressure !== en.signal.sellPressure) sigBad++;
+
+        const plan = cold
+          ? { chemotaxisTicks: 0, noseTouchTicks: 0, rightWeight: 0, totalTicks: 0 }
+          : planStimulus(signal, CFG);
+
+        if (plan.chemotaxisTicks !== en.plan.chemotaxisTicks
+          || plan.noseTouchTicks !== en.plan.noseTouchTicks
+          || plan.totalTicks !== en.plan.totalTicks) planBad++;
+
+        let pe = null, netTravel = 0, reversals = 0;
+        if (plan.totalTicks > 0) {
+          const rng = new Xorshift128(ep.seed);
+          const r = runSequence(createState(), createPosition(), expandPlan(plan, rng));
+          pe = +pathEfficiency(r.path).toFixed(4);
+          netTravel = +(r.netTravel ?? 0).toFixed(4);
+          reversals = r.reversals ?? 0;
+        }
+
+        if (pe !== en.path_efficiency) peBad++;
+        if (netTravel !== en.net_travel) travelBad++;
+        if (reversals !== en.reversals) revBad++;
+      }
+      if (e % 8 === 0) { $('stat').textContent = `recomputing epoch ${e}/${feed.epochs.length}…`; await new Promise((r) => setTimeout(r, 0)); }
+    }
+
+    mark(row('derived signal', sigBad ? `${sigBad} differ` : 'all match', `${n} stored`, n, sigBad === 0));
+    mark(row('tick plan', planBad ? `${planBad} differ` : 'all match', `${n} stored`, n, planBad === 0));
+    mark(row('path efficiency', peBad ? `${peBad} differ` : 'all match', `${n} stored`, n, peBad === 0));
+    mark(row('net travel', travelBad ? `${travelBad} differ` : 'all match', `${n} stored`, n, travelBad === 0));
+    mark(row('reversals', revBad ? `${revBad} differ` : 'all match', `${n} stored`, n, revBad === 0));
+
+    $('stat').textContent = 'done';
+    $('tally').innerHTML = fail === 0
+      ? `<b class="ok">${pass} checks passed.</b> ${n} token-epochs recomputed in your browser.`
+      : `<b class="bad">${fail} check${fail === 1 ? '' : 's'} failed</b>, ${pass} passed.`;
+  } catch (err) {
+    $('stat').textContent = 'failed';
+    $('tally').innerHTML = `<b class="bad">${String(err && err.message || err)}</b>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

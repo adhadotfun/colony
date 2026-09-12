@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>how it works</title>
+<link rel="stylesheet" href="./css/site.css">
+<style>
+  body{background:var(--paper);color:var(--ink);font:400 16px/1.7 var(--font-body);}
+  .page{max-width:760px;margin:0 auto;padding:40px 24px 120px;}
+  .back{font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);text-decoration:none;}
+  .back:hover{color:var(--ink);}
+  h1.doc{font-family:var(--font-display);font-size:clamp(30px,4vw,50px);font-weight:400;line-height:1.05;margin:28px 0 8px;}
+  .doc__sub{color:var(--ink-3);font-size:15px;margin:0 0 40px;}
+  #doc h1,#doc h2,#doc h3{font-family:var(--font-display);font-weight:400;line-height:1.15;margin:1.5em 0 .4em;}
+  #doc h1{font-size:32px;} #doc h2{font-size:25px;} #doc h3{font-size:20px;}
+  #doc p{margin:0 0 1em;}
+  #doc strong{color:var(--ink);font-weight:600;}
+  #doc a{color:var(--accent-ink);}
+  #doc code{font-family:var(--font-num);font-size:13px;background:var(--paper-sunk);padding:1px 4px;}
+  #doc pre{background:var(--paper-sunk);padding:14px;overflow-x:auto;}
+  #doc pre code{background:none;padding:0;}
+  #doc blockquote{margin:1em 0;padding:2px 0 2px 16px;border-left:2px solid var(--rule-strong);color:var(--ink-2);}
+  #doc ul,#doc ol{padding-left:20px;}
+  #doc table{width:100%;border-collapse:collapse;margin:1.2em 0;font-size:13px;}
+  #doc th{font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);}
+  #doc td{font-family:var(--font-num);font-size:13px;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  #doc hr{border:0;border-top:1px solid var(--rule);margin:2em 0;}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="./index.html">← the instrument</a>
+  <h1 class="doc">How it works</h1>
+  <p class="doc__sub">The full method and the measured result, straight from the report that ships with the build.</p>
+  <div id="doc">loading…</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+fetch('./BACKTEST.md')
+  .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(function (t) { document.getElementById('doc').innerHTML = marked.parse(t); })
+  .catch(function () { document.getElementById('doc').textContent = 'Could not load BACKTEST.md'; });
+</script>
+</body>
+</html>

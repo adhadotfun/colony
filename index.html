@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>colony</title>
+<meta name="description" content="One C. elegans nervous system, driven by holder flow. Twenty odd Base tokens per hour, 48 hours, replayed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="./css/site.css">
+<style>
+  /* the colony rail: the reference instrument watched one token, this watches the whole cohort */
+  /* aligned to the same 72px inset the controls and footer use, and clearing both */
+  /* data column: every reading lives here, nothing numeric sits in the story plate */
+  .rail{position:absolute;top:168px;right:72px;bottom:40px;width:312px;
+        display:flex;flex-direction:column;gap:8px;overflow:hidden;
+        z-index:6;pointer-events:auto;}
+  .rail__head{display:flex;align-items:baseline;justify-content:space-between;
+        font-family:var(--font-num);font-size:10px;text-transform:uppercase;
+        letter-spacing:.09em;color:var(--ink-3);padding:0 2px 6px;}
+  .rail__list{flex:1 1 auto;min-height:0;overflow-y:auto;background:rgba(250,249,246,.86);
+        backdrop-filter:blur(6px);border:1px solid var(--rule);border-radius:2px;}
+
+  /* the readings card, moved out of the left plate */
+  .rail__block{display:flex;flex-direction:column;flex:0 0 auto;}
+  .rail .legend{border-top:0;padding:9px 12px 7px;flex:0 0 auto;border:1px solid var(--rule);border-radius:2px;
+        background:rgba(250,249,246,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);}
+  .rail .legend__time{margin-bottom:var(--s2);}
+  .rail .legend__rows{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;}
+  .rail .row{padding:3px 0;font-size:11px;gap:8px;}
+  .rail .row__k{font-size:10px;}
+  .rail .row__v{font-size:11px;}
+  .rail__verify{flex:0 0 auto;text-align:center;padding:7px 10px;}
+  @media (max-height:900px){
+    .rail{top:152px;bottom:28px;}
+    .rail .legend{padding:7px 12px 6px;}
+    .rail .row{padding:2px 0;}
+  }
+  @media (max-height:840px){
+    .rail{top:148px;bottom:16px;gap:6px;}
+    .rail .row{padding:1px 0;}
+    .rail__prov{padding:5px 12px 6px;}
+    .rail__prov .foot__label{display:none;}
+    .rail__verify{padding:6px 10px;}
+  }
+  /* laptop heights: the ranked list is the point of the column, so the
+     secondary readings collapse and provenance folds onto one line */
+  @media (max-height:800px){
+    .rail .row--drop{display:none;}
+    .rail__prov{flex-direction:row;flex-wrap:wrap;column-gap:14px;row-gap:0;padding:4px 10px 5px;}
+    .rail__prov .hash{font-size:9px;}
+    .rail__prov .hash__v{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  }
+  .rail__prov{border:1px solid var(--rule);border-radius:2px;padding:6px 12px 7px;
+        background:rgba(250,249,246,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+        display:flex;flex-direction:column;gap:3px;flex:0 0 auto;}
+  .rail__prov .foot__label{margin-bottom:1px;font-size:9px;}
+  .rail__prov .hash{gap:var(--s2);font-size:9.5px;justify-content:space-between;line-height:1.45;}
+  .tk{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;
+      width:100%;text-align:left;background:none;border:0;cursor:pointer;
+      padding:7px 10px;border-bottom:1px solid var(--rule);font:inherit;}
+  .tk:last-child{border-bottom:0;}
+  .tk:hover{background:rgba(229,55,44,.05);}
+  .tk[aria-current="true"]{background:rgba(229,55,44,.09);}
+  .tk__rank{font-family:var(--font-num);font-size:10px;color:var(--ink-3);}
+  .tk__sym{font-family:var(--font-num);font-size:12px;color:var(--ink);
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tk__eff{font-family:var(--font-num);font-size:11px;color:var(--ink-2);}
+  .tk[aria-current="true"] .tk__eff{color:var(--accent);}
+  .rail__foot{font-family:var(--font-num);font-size:10px;color:var(--ink-3);
+      padding:6px 2px 0;line-height:1.5;}
+  .epoch{display:flex;align-items:center;gap:6px;}
+  .epoch__read{font-family:var(--font-num);font-size:11px;color:var(--ink-2);
+      min-width:104px;text-align:center;}
+  @media (max-width:1100px){.rail{display:none;}}
+
+
+  /* soften the paper plate: fade on both axes so no hard cut line shows over the map */
+  .plate{
+    background:linear-gradient(100deg,var(--paper) 0,var(--paper) 34%,rgba(250,249,246,.92) 58%,rgba(250,249,246,.55) 80%,transparent 100%);
+    -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 62%, rgba(0,0,0,.55) 84%, transparent 100%);
+            mask-image:linear-gradient(to bottom, #000 0, #000 62%, rgba(0,0,0,.55) 84%, transparent 100%);
+    padding-bottom:calc(var(--s6) + 96px);
+  }
+  /* the small frosted cards were cutting a hard rectangle out of the paper */
+  .rail__list{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+        background:rgba(250,249,246,.78);}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="stage-wrap">
+    <main class="stage">
+      <canvas id="stage-canvas" aria-label="Worm trajectory map"></canvas>
+    </main>
+
+    <div class="plate">
+      <div class="plate__inner">
+        <div class="plate__top">
+          <div class="status status--idle" id="status">
+            <span class="status__dot"></span>
+            <span id="status-text">loading</span>
+          </div>
+          <button class="contract" id="contract" title="click to copy" aria-label="Copy contract address">
+            <span class="contract__sym" id="contract-sym">···</span>
+            <span class="contract__addr" id="contract-addr">···</span>
+            <span class="contract__act">copy</span>
+          </button>
+        </div>
+
+        <h1 class="title">Buyers push it <em>forward</em>. Sellers back it <em>out</em>. Whales make it <em>circle</em>.</h1>
+
+        <p class="lede">One real <i>C. elegans</i> nervous system: 299 neurons, 3,683 connections, 98 muscle cells. Each hour every token in the cohort gets the same 256 ticks of it. New holders fire the 8 food seeking neurons, sellers fire the 10 withdrawal neurons, concentration sets the turn bias. How far the worm actually gets is the readout.
+          <a class="lede__more" href="./docs.html">What the back-test found</a>
+        </p>
+
+        <nav class="boxes">
+          <a class="box" href="./docs.html">Back-test</a>
+          <a class="box" href="./out/feed_v3.json">Feed</a>
+          <a class="box" href="./data/connectome.json">Connectome</a>
+          <a class="box" href="./verify.html">Verify</a>
+        </nav>
+
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="seg">
+        <button class="btn" id="cam-follow" aria-pressed="true">follow</button>
+        <button class="btn" id="cam-free" aria-pressed="false">free</button>
+        <button class="btn" id="cam-fit" aria-pressed="false">fit</button>
+      </div>
+      <div class="seg">
+        <button class="btn" id="zoom-in">zoom +</button>
+        <button class="btn" id="zoom-out">zoom −</button>
+      </div>
+      <div class="seg epoch">
+        <button class="btn" id="ep-prev" aria-label="Previous hour">◀</button>
+        <span class="epoch__read" id="ep-read">hour 1 / 48</span>
+        <button class="btn" id="ep-next" aria-label="Next hour">▶</button>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div class="rail__block">
+        <div class="legend">
+          <div class="legend__head">
+            <span class="legend__block" id="legend-block">···</span>
+            <span class="legend__tag" id="legend-tag">···</span>
+          </div>
+          <div class="legend__time" id="legend-time"></div>
+          <div class="legend__rows">
+            <div class="row"><span class="row__k">holders</span><span class="row__v row__v--null" id="v-holders">···</span></div>
+            <div class="row"><span class="row__k">new holders</span><span class="row__v row__v--null" id="v-new">···</span></div>
+            <div class="row"><span class="row__k">sells</span><span class="row__v row__v--null" id="v-sells">···</span></div>
+            <div class="row"><span class="row__k">concentration</span><span class="row__v row__v--null" id="v-hhi">···</span></div>
+            <div class="row row--drop"><span class="row__k">gini</span><span class="row__v row__v--null" id="v-gini">···</span></div>
+            <div class="row row--drop"><span class="row__k">ticks used</span><span class="row__v row__v--null" id="v-ticks">···</span></div>
+            <div class="row"><span class="row__k">path efficiency</span><span class="row__v row__v--null" id="v-eff">···</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail__head">
+        <span>this hour, ranked</span>
+        <span id="rail-count">···</span>
+      </div>
+      <div class="rail__list" id="rail-list"></div>
+      <div class="rail__foot">rank by path efficiency. click to drive that token.</div>
+
+      <div class="rail__prov">
+        <div class="foot__label">seed = keccak(blockHash ‖ holderSetRoot)</div>
+        <span class="hash"><span class="hash__k">seed</span><span class="hash__v" id="h-seed">···</span></span>
+        <span class="hash"><span class="hash__k">root</span><span class="hash__v" id="h-root">···</span></span>
+        <span class="hash"><span class="hash__k">block</span><span class="hash__v" id="h-block">···</span></span>
+      </div>
+
+      <a class="box box--verify rail__verify" href="./verify.html">Check it yourself <span class="verify__arrow">→</span></a>
+    </aside>
+
+    <div class="scale">
+      <div class="scale__bar" id="scale-bar" style="width:100px"></div>
+      <span><span id="scale-units">100</span> units</span>
+    </div>
+
+
+  </div>
+
+  <div class="brainbar">
+    <div class="brain">
+      <div class="brain__head">
+        <span class="brain__title">the brain</span>
+        <span class="brain__sub" id="brain-sub">299 neurons · 3,683 connections</span>
+      </div>
+      <div class="brain__stage">
+        <canvas id="brain-canvas" aria-label="C. elegans brain, 397 cells firing"></canvas>
+      </div>
+      <div class="brain__legend" id="brain-legend"></div>
+      <div class="brain__hover" id="brain-hover"></div>
+      <div class="brain__now">
+        <p class="brain__line brain__line--null" id="brain-line">reading the cohort…</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

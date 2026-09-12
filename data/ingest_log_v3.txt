@@ -1,0 +1,37 @@
+     EIGEN tr=  1425    8s active_holders 0->19->28 hhi None->2595.3
+    PENDLE tr=  3647   12s active_holders 26->130->171 hhi 9908.54->5890.81
+       ZRO tr= 31666    9s active_holders 46->347->446 hhi 2656.59->2580.73
+       XCN tr=  1936   10s active_holders 4->26->37 hhi 3226.9->7303.74
+     FLOCK tr= 47661   10s active_holders 72->347->429 hhi 1519.57->1424.62
+       REZ tr=   886    9s active_holders 3->24->27 hhi 7402.72->2158.9
+      CHIP tr=  9795   15s active_holders 3->78->81 hhi 4540.38->3175.42
+     SYRUP tr=  5361    8s active_holders 12->64->73 hhi 3223.52->1493.54
+     KAITO tr=  6474   10s active_holders 17->243->327 hhi 2939.73->1116.99
+      TRAC tr=  1691   10s active_holders 4->13->22 hhi 5093.44->3700.41
+       CYS tr=   228   11s active_holders 0->6->6 hhi None->6206.63
+      ZORA tr=113574   11s active_holders 125->1186->1483 hhi 5199.6->1478.05
+       SPX tr=  7594    9s active_holders 15->166->209 hhi 4561.94->2348.68
+       LSK tr=  3991   14s active_holders 3->10->33 hhi 5841.87->9544.73
+       MOG tr=  1001   10s active_holders 4->124->174 hhi 5444.67->4784.13
+       BIO tr=  8838    8s active_holders 17->145->183 hhi 3327.3->2398.37
+       OPG tr=  8627   11s active_holders 2->41->59 hhi 9034.82->4466.36
+       GPS tr=   478   10s active_holders 0->26->39 hhi None->3604.23
+       DRV tr= 32046   12s active_holders 61->245->266 hhi 2517.2->2999.7
+       RSR tr=  2559   10s active_holders 6->145->182 hhi 7567.39->1899.02
+       BSB tr=  2577    9s active_holders 2->7->9 hhi 9830.3->8978.31
+         W tr=  1715   11s active_holders 8->29->46 hhi 2873.43->2484.9
+      HOME tr= 10131   10s active_holders 12->111->176 hhi 3938.03->2631.59
+
+--- skipped ---
+AERO FAIL http 500
+VIRTUAL FAIL http 500
+LAPTOP FAIL http 500
+BASECAT FAIL http 500
+STG too quiet (174 transfers)
+1INCH too quiet (30 transfers)
+RIF too quiet (0 transfers)
+SUSHI too quiet (60 transfers)
+BEAM too quiet (41 transfers)
+SNX too quiet (126 transfers)
+MOVE too quiet (3 transfers)
+ALLO too quiet (9 transfers)

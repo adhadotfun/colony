@@ -381,8 +381,12 @@ The raw inputs, on identical rows, are roughly twice as strong:
 | input | k=3 | k=7 | k=14 |
 |---|---|---|---|
 | raw growth | **+0.449** | **+0.459** | **+0.499** |
-| raw exit rate | -0.431 | -0.428 | -0.433 |
-| raw HHI | -0.073 | -0.077 | -0.137 |
+| exit rate, negated (`-sell`) | -0.431 | -0.428 | -0.433 |
+| concentration, negated (`-hhi`) | -0.073 | -0.077 | -0.137 |
+
+Sign convention: the engine scores `-sell` and `-hhi`, so the raw quantities
+themselves carry the opposite sign. Exit rate is +0.431 / +0.428 / +0.433 and
+HHI is +0.073 / +0.077 / +0.137 against forward holder change on this cohort.
 
 Every worm result is weaker than the numbers it was computed from. The
 connectome is not adding information, it is losing some.
@@ -542,10 +546,16 @@ And the raw inputs, which is where it gets interesting:
 |---|---|---|
 | raw growth | **+0.449 / +0.459 / +0.499** | **-0.175 / -0.192 / -0.222** |
 | raw exit rate | +0.431 / +0.428 / +0.433 | -0.247 / -0.238 / -0.241 |
-| raw HHI | -0.073 / -0.077 / -0.137 | +0.111 / +0.172 / +0.285 |
+| raw HHI | +0.073 / +0.077 / +0.137 | +0.111 / +0.172 / +0.285 |
 
-**Every single input flips sign between the two chains.** That is the most
-important line in this document and it is not a flattering one.
+All three rows are stated as the raw quantity, not the negated field the engine
+scores. An earlier revision of this table printed the Base HHI row straight from
+the `-hhi` field while de-negating the Robinhood one, which made concentration
+look like it flipped sign. It does not. Corrected 2026-09-13.
+
+**Two of the three inputs flip sign between the two cohorts: growth and exit
+rate. Concentration keeps its sign.** That is the most important line in this
+document and it is not a flattering one.
 
 On Base, growth predicts more growth at +0.45 to +0.50, which is momentum plus
 the survivorship bias already admitted above: no token in that universe was
@@ -563,10 +573,19 @@ exits: holders leaving precede fewer holders. The v3 text called the positive
 version "a liveness detector wearing a distribution-health costume", and the
 launch cohort is the control that confirms it.
 
-HHI flips too, and on the launch cohort it is the strongest raw input at k=14
-(+0.285): concentration *rising* precedes holder growth, because a token
-consolidating into a few committed wallets early is a token that has not been
-abandoned yet. On the survivor cohort that channel is absent.
+HHI is the one input that does **not** flip. It is positive on both cohorts,
++0.07 to +0.14 on Base and +0.11 to +0.29 on Robinhood, so concentration
+*rising* precedes holder growth in both universes and simply runs stronger on
+the launch cohort, where it is the strongest raw input at k=14. A plausible
+reading is that a token consolidating into a few committed wallets early is a
+token that has not been abandoned yet, and that this channel is louder before
+survivorship filtering removes the abandoned ones. That is an interpretation,
+not a tested claim.
+
+One caveat on this table: the Base v3 scored rows were overwritten by the
+Robinhood run, so the Base column is transcribed from the Finding 3 table
+recorded on 2026-09-11 rather than re-derived from disk today. The Robinhood
+column is re-derived from `out/backtest_v3.json`.
 
 ## What this means for the shipped instrument
 

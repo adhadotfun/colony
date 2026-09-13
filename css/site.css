@@ -4,3 +4,8 @@
 /* COLONY additions: brain strip hover readout */
 .brain__hover{font-family:var(--font-num,ui-monospace,monospace);font-size:10px;letter-spacing:.02em;color:#726f64;min-height:13px;padding:2px 0 0;text-transform:none}
 .brain__legend{flex-wrap:wrap;gap:10px}
+.contract--ca .contract__sym{color:var(--accent-ink)}
+.contract--empty{cursor:default;border-style:dashed;border-color:var(--rule)}
+.contract--empty:hover{border-color:var(--rule)}
+.contract--empty .contract__addr{color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase}
+.plate__top{flex-wrap:wrap;gap:var(--s2)}

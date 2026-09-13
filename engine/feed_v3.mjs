@@ -26,7 +26,7 @@ initConnectome(JSON.parse(raw));
 const connectomeSha = createHash('sha256').update(raw).digest('hex');
 
 const ds = JSON.parse(readFileSync(resolve(DATA, 'snapshots_v3.json'), 'utf8'));
-const w = ds.meta.window || {};
+const w = ds.meta.window || ds.meta.cohort_window || {};
 const cohortRoot = `${w.start_block}:${ds.meta.chain_id || 8453}`;
 const nEpochs = Math.min(...ds.tokens.map((t) => t.snapshots.length));
 
@@ -125,11 +125,15 @@ const feed = {
     n_epochs: nEpochs,
     generated_utc: new Date().toISOString(),
     tokens_selected: ds.tokens.length,
-    selection_rule: ds.meta.universe_rule
+    venue: ds.meta.venue || null,
+    candidates_found: ds.meta.candidates_found || null,
+    selection_rule: ds.meta.selection_rule || ds.meta.universe_rule
       || 'Base mid-cap tokens with sustained transfer activity over the 48 hour window',
-    survivorship_note: 'the universe was picked because these tokens are actively traded NOW, '
-      + 'so it is selected on survival; forward holder growth is measured inside that same window',
-    epoch_note: 'epochs are 1 hour, not 1 day',
+    survivorship_note: ds.meta.survivorship_note
+      || 'the cohort is every token launched inside one fixed window, taken before any of them '
+      + 'had a track record; tokens that died are still in the sample and still scored',
+    epoch_note: ds.meta.epoch_note || 'epochs are 1 hour, not 1 day',
+    venue_note: ds.meta.venue_note || null,
     sell_pressure_note: 'v3 sell pressure is an exit rate (exits / prev holders), not value-to-LP as in v1',
   },
 };

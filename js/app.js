@@ -571,6 +571,29 @@ function wireControls() {
   $('ep-prev').onclick = () => hop(-1);
   $('ep-next').onclick = () => hop(1);
 
+  // Colony's own token. Leave COLONY_CA empty until the coin is live: the pill
+  // then reads "no ca yet" and is inert instead of copying a placeholder.
+  const COLONY_CA = '';
+  const caBtn = $('ca'), caAddr = $('ca-addr'), caAct = $('ca-act');
+  if (COLONY_CA) {
+    caBtn.classList.remove('contract--empty');
+    caAddr.textContent = `${COLONY_CA.slice(0, 8)}…${COLONY_CA.slice(-6)}`;
+    caAct.textContent = 'copy';
+    caBtn.title = `${COLONY_CA} (click to copy)`;
+    caBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(COLONY_CA);
+        caAct.textContent = 'copied';
+      } catch { caAct.textContent = COLONY_CA.slice(0, 10); }
+      caAct.classList.add('contract__act--done');
+      setTimeout(() => { caAct.textContent = 'copy'; caAct.classList.remove('contract__act--done'); }, 1400);
+    };
+  } else {
+    caBtn.classList.add('contract--empty');
+    caBtn.disabled = true;
+    caBtn.title = 'Colony has no contract address yet';
+  }
+
   $('contract').onclick = async () => {
     const act = document.querySelector('.contract__act');
     try {

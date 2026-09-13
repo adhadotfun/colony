@@ -21,6 +21,10 @@ const PAPER = '#faf9f6';
 const INK = '#16150f';
 const INK3 = '#726f64';
 const RULE = '#dedbd2';
+const GRID_MINOR = '#eeebe2';
+const GRID_MAJOR = '#dedbd0';
+const ZOOM_MIN = 0.002;   // ~3 decades out: the lattice keeps restacking all the way
+const ZOOM_MAX = 40;
 const ACCENT = '#e5372c';
 const CLASS_COLOR = { chemo: '#7a6a3c', mech: '#7a3c3c', motor: '#3c5a7a', inter: '#8a8578' };
 
@@ -245,38 +249,71 @@ function viewTransform(w, h) {
  * level takes over, so the lattice restacks instead of vanishing.
  */
 function drawGrid(ctx, w, h, scale, cx, cy) {
-  const MIN = 34;                                   // px: tightest major spacing
+  const WANT = 110;                                 // px: preferred cell size
+  const MIN  = 72;                                  // px: never tighter than this
 
-  // Power of two ladder, so every coarser level's lines are a strict subset of
-  // the finer one's. That is what makes the restack seamless: the only lines
-  // that ever fade are the midpoints between major lines, and the major lattice
-  // itself is continuously on screen at 34px to 68px, at full strength, always.
-  const stepWorld = Math.pow(2, Math.ceil(Math.log2(MIN / scale)));
-  const major = stepWorld * scale;                  // 34px .. 68px by construction
+  // Decade ladder with 1/2/5/10 mantissas. Pick the smallest step whose
+  // on-screen size clears MIN, so the cell always sits in roughly 72..180px.
+  // Zoom out far enough and the step jumps a rung: the old cells merge into a
+  // new coarser lattice covering the same paper, which is the restack.
+  const base = Math.pow(10, Math.floor(Math.log10(WANT / scale)));
+  let step = 10 * base;
+  for (const m of [1, 2, 5, 10]) {
+    if (m * base * scale >= MIN) { step = m * base; break; }
+  }
 
-  const ox = w / 2 - cx * scale;
-  const oy = h / 2 - cy * scale;
+  // World bounds of the viewport, so we iterate real coordinates rather than
+  // screen offsets. That is what keeps labels honest and lines exactly aligned
+  // to the unit lattice no matter how far the camera has travelled.
+  const wl = cx - (w / 2) / scale, wr = cx + (w / 2) / scale;
+  const wt = cy - (h / 2) / scale, wb = cy + (h / 2) / scale;
+  const sx = (x) => w / 2 + (x - cx) * scale;
+  const sy = (y) => h / 2 + (y - cy) * scale;
 
-  const line = (stepPx, alpha, width) => {
-    if (alpha <= 0.004 || !isFinite(stepPx) || stepPx < 3) return;
-    const sx = ((ox % stepPx) + stepPx) % stepPx;
-    const sy = ((oy % stepPx) + stepPx) % stepPx;
-    ctx.globalAlpha = alpha;
-    ctx.lineWidth = width;
-    ctx.beginPath();
-    for (let x = sx; x < w; x += stepPx) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); }
-    for (let y = sy; y < h; y += stepPx) { ctx.moveTo(0, y + 0.5); ctx.lineTo(w, y + 0.5); }
-    ctx.stroke();
-  };
-
-  // midpoints fade in as the major cell grows, and are fully faded at the exact
-  // moment the ladder halves and they become the new major lines
-  const t = Math.max(0, Math.min(1, (major - MIN) / MIN));
+  const x0 = Math.floor(wl / step) * step, y0 = Math.floor(wt / step) * step;
+  const majorEvery = step * 5;
+  const isMajor = (v) => Math.abs(v / majorEvery - Math.round(v / majorEvery)) < 1e-6;
 
   ctx.save();
-  ctx.strokeStyle = RULE;
-  line(major, 1, 1);                                // always present
-  line(major / 2, t, 1);                            // subdivision, crossfades
+  ctx.lineWidth = 1;
+
+  // two passes so every line is drawn at full opacity in its own colour: no
+  // alpha crossfade, nothing ever half present, nothing to "disappear"
+  for (const major of [false, true]) {
+    ctx.strokeStyle = major ? GRID_MAJOR : GRID_MINOR;
+    ctx.beginPath();
+    for (let x = x0; x <= wr; x += step) {
+      if (isMajor(x) !== major) continue;
+      const p = Math.round(sx(x)) + 0.5;
+      ctx.moveTo(p, 0); ctx.lineTo(p, h);
+    }
+    for (let y = y0; y <= wb; y += step) {
+      if (isMajor(y) !== major) continue;
+      const p = Math.round(sy(y)) + 0.5;
+      ctx.moveTo(0, p); ctx.lineTo(w, p);
+    }
+    ctx.stroke();
+  }
+
+  // unit readout at every major intersection, so the paper is a measuring
+  // surface and not just texture: you can see the scale you are looking at
+  ctx.fillStyle = INK3;
+  ctx.globalAlpha = 0.72;
+  ctx.font = '9px "JetBrains Mono", ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  const dec = step < 1 ? Math.min(6, Math.ceil(-Math.log10(step))) : 0;
+  const fmt = (v) => {
+    const n = Math.abs(v) < step / 2 ? 0 : v;
+    return n.toFixed(dec);
+  };
+  const mx0 = Math.floor(wl / majorEvery) * majorEvery;
+  const my0 = Math.floor(wt / majorEvery) * majorEvery;
+  for (let x = mx0; x <= wr; x += majorEvery) {
+    for (let y = my0; y <= wb; y += majorEvery) {
+      ctx.fillText(`${fmt(x)}, ${fmt(y)}`, sx(x) + 5, sy(y) + 4);
+    }
+  }
   ctx.globalAlpha = 1;
   ctx.restore();
 }
@@ -400,11 +437,13 @@ function advance() {
  * cursor pinned while it moves. The offset correction uses the zoom ratio,
  * which equals the scale ratio, so it holds in both fit and free camera.
  */
-function easeZoom() {
+function easeZoom(dt) {
   const d = state.zoomTo - state.zoom;
   if (Math.abs(d) < state.zoom * 1e-4) { state.zoom = state.zoomTo; return; }
   const prev = state.zoom;
-  state.zoom = prev + d * 0.18;                     // critically damped enough to feel instant
+  // frame rate independent exponential approach: the same physical glide on a
+  // 60Hz and a 144Hz screen, where a flat per frame fraction would not be
+  state.zoom = prev + d * (1 - Math.exp(-14 * dt));
   const r = state.zoom / prev;
   const a = state.zoomAt;
   state.offset.x = r * (state.offset.x - a.x) + a.x;
@@ -412,9 +451,12 @@ function easeZoom() {
 }
 
 let last = 0;
+let prevTs = 0;
 function frame(ts) {
+  const dt = Math.min((ts - prevTs) / 1000 || 0.016, 0.05); // clamp tab-switch gaps
+  prevTs = ts;
   if (ts - last > 55) { advance(); last = ts; }
-  easeZoom();
+  easeZoom(dt);
   drawStage();
   if (state.brain) state.brain.draw();
   requestAnimationFrame(frame);
@@ -435,7 +477,7 @@ function wireControls() {
   $('cam-fit').onclick = () => setCam('fit');
   const nudge = (f) => {
     state.zoomAt = { x: 0, y: 0 };                  // buttons zoom about centre
-    state.zoomTo = Math.max(0.02, Math.min(24, state.zoomTo * f));
+    state.zoomTo = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.zoomTo * f));
   };
   $('zoom-in').onclick = () => nudge(1.35);
   $('zoom-out').onclick = () => nudge(1 / 1.35);
@@ -473,10 +515,11 @@ function wireControls() {
     ev.preventDefault();
     const r = cv.getBoundingClientRect();
     state.zoomAt = { x: ev.clientX - r.left - r.width / 2, y: ev.clientY - r.top - r.height / 2 };
-    // scale the step by wheel delta so a trackpad flick and a mouse notch both feel right
-    const mag = Math.min(Math.abs(ev.deltaY) / 100, 3);
-    const f = Math.pow(1.22, (ev.deltaY < 0 ? 1 : -1) * Math.max(mag, 0.35));
-    state.zoomTo = Math.max(0.02, Math.min(24, state.zoomTo * f));
+    // continuous exponential response: zoom is proportional to how far the
+    // wheel actually moved, so a trackpad glide is smooth rather than stepped
+    const dy = ev.deltaMode === 1 ? ev.deltaY * 16 : ev.deltaY;
+    const f = Math.pow(0.999, Math.max(-240, Math.min(240, dy)));
+    state.zoomTo = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.zoomTo * f));
   }, { passive: false });
 
   window.addEventListener('keydown', (ev) => {

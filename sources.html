@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>data sources</title>
+<link rel="icon" href="./assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+<link rel="stylesheet" href="./css/site.css">
+<style>
+  body{background:var(--paper);color:var(--ink);font:400 16px/1.7 var(--font-body);}
+  .page{max-width:900px;margin:0 auto;padding:40px 24px 120px;}
+  .back{font-family:var(--font-num);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);text-decoration:none;}
+  .back:hover{color:var(--ink);}
+  h1.doc{font-family:var(--font-display);font-size:clamp(30px,4vw,50px);font-weight:400;line-height:1.05;margin:28px 0 8px;}
+  .doc__sub{color:var(--ink-3);font-size:15px;margin:0 0 40px;max-width:620px;}
+  .src{border-top:1px solid var(--rule);padding:18px 0;}
+  .src:last-of-type{border-bottom:1px solid var(--rule);}
+  .src__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .src__name{font-family:var(--font-num);font-size:13px;letter-spacing:.04em;color:var(--ink);}
+  .src__meta{font-family:var(--font-num);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);}
+  .src__desc{font-size:14px;color:var(--ink-2);margin:6px 0 10px;max-width:640px;}
+  .src__acts{display:flex;gap:8px;}
+  .act{font-family:var(--font-num);font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--rule-strong);background:none;color:var(--ink-2);cursor:pointer;text-decoration:none;display:inline-block;}
+  .act:hover{border-color:var(--ink);color:var(--ink);}
+  .peek{display:none;margin-top:12px;background:var(--paper-sunk);border:1px solid var(--rule);padding:12px;max-height:340px;overflow:auto;}
+  .peek pre{margin:0;font-family:var(--font-num);font-size:11.5px;line-height:1.6;color:var(--ink-2);white-space:pre;}
+  .peek.on{display:block;}
+  .note{font-size:13px;color:var(--ink-3);margin-top:28px;max-width:640px;}
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="back" href="/">&larr; the instrument</a>
+  <h1 class="doc">Data sources</h1>
+  <p class="doc__sub">Every file the instrument reads, in the open. Preview one in place, or take the raw file and check the numbers yourself. Nothing here is fetched at runtime, what you see is what shipped with the build.</p>
+
+  <div id="list"></div>
+
+  <p class="note">Hashes for these files are checked on the <a href="/verify" style="color:var(--accent-ink)">verify</a> page. If a byte moved, that page says so.</p>
+</div>
+<script>
+const SOURCES = [
+  {f:'./out/feed_v3.json', n:'feed_v3.json', d:'The run itself. Every epoch, the cohort in it, the seed, and the per tick state the canvas replays. This is what the front page is drawing.'},
+  {f:'./data/connectome.json', n:'connectome.json', d:'The wiring. 302 neurons and the synapse and gap junction weights between them, the fixed substrate every run shares.'},
+  {f:'./data/snapshots_v3.json', n:'snapshots_v3.json', d:'Raw market snapshots the epochs were built from. Holders, flows and concentration per token, per interval.'},
+  {f:'./out/backtest_v3.json', n:'backtest_v3.json', d:'Scored results across the full epoch set. The table on the back-test page is rendered from this.'},
+  {f:'./data/cell_layout.json', n:'cell_layout.json', d:'Fixed screen position for each cell, so a given neuron sits in the same place on every run.'},
+  {f:'./out/scored_v3.json', n:'scored_v3.json', d:'Per token scores before ranking, the intermediate step between snapshots and the feed.'}
+];
+const fmt = b => b > 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.round(b/1024)+' KB';
+const list = document.getElementById('list');
+SOURCES.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'src';
+  el.innerHTML = `<div class="src__head"><span class="src__name">${s.n}</span><span class="src__meta" id="m${i}">reading</span></div>
+    <p class="src__desc">${s.d}</p>
+    <div class="src__acts"><button class="act" id="b${i}">preview</button><a class="act" href="${s.f}" download>download raw</a></div>
+    <div class="peek" id="p${i}"><pre></pre></div>`;
+  list.appendChild(el);
+  fetch(s.f, {method:'HEAD'}).then(r => {
+    const len = r.headers.get('content-length');
+    document.getElementById('m'+i).textContent = len ? fmt(+len) + ' &middot; json'.replace('&middot;','·') : 'json';
+  }).catch(() => { document.getElementById('m'+i).textContent = 'json'; });
+  let loaded = false;
+  document.getElementById('b'+i).onclick = async (ev) => {
+    const peek = document.getElementById('p'+i);
+    if (peek.classList.contains('on')) { peek.classList.remove('on'); ev.target.textContent = 'preview'; return; }
+    peek.classList.add('on'); ev.target.textContent = 'hide';
+    if (loaded) return;
+    loaded = true;
+    const pre = peek.querySelector('pre');
+    pre.textContent = 'loading';
+    try {
+      const d = await (await fetch(s.f)).json();
+      let txt = JSON.stringify(d, null, 2);
+      // A quarter million characters of JSON helps nobody read anything. Show the
+      // shape and the head of it, the download button is there for the whole file.
+      if (txt.length > 12000) txt = txt.slice(0, 12000) + '\n\n… truncated for display, use download raw for the complete file';
+      pre.textContent = txt;
+    } catch (e) { pre.textContent = 'could not load this file'; }
+  };
+});
+</script>
+</body>
+</html>

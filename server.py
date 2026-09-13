@@ -15,11 +15,11 @@ PORT = int(os.environ.get("PORT", "8080"))
 # @import in css/site.css).
 CSP = (
     "default-src 'self'; "
-    "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; "
+    "script-src 'self' https://cdn.jsdelivr.net https://static.cloudflareinsights.com 'unsafe-inline'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com data:; "
     "img-src 'self' data:; "
-    "connect-src 'self'; "
+    "connect-src 'self' https://cloudflareinsights.com; "
     "frame-ancestors 'none'; "
     "base-uri 'self'"
 )

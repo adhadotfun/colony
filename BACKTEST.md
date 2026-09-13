@@ -1,10 +1,13 @@
 # The 30-epoch back-test
 
-**Verdict: the worm does not predict holder growth on this cohort, and the
-confidence gate mutes 92% of it. Reported in full rather than buried.**
+**Verdict: on this cohort the shipped mapping does show a positive, significant
+association with forward holder growth at 3 and 7 epochs, and none at 14. The raw
+inputs it compresses are at least as strong, so the compression is not proven to
+add anything. The confidence gate still mutes 78% of the rows. Reported in full
+rather than buried.**
 
-Generated 2026-09-11. Cohort, feed and code are in this directory, so every number
-below recomputes from public Base chain data.
+Generated 2026-09-13. Cohort, feed and code are in this directory, so every number
+below recomputes from public Robinhood Chain data.
 
 ---
 
@@ -25,20 +28,20 @@ input, over the identical rows.
 
 | | |
 |---|---|
-| chain | Base, Uniswap V2 WETH pairs |
-| selection | every pair created in one fixed 3 hour window, no survivorship filter |
-| tokens | 16 (from 30 candidates; rest had under 20 transfers or never reached 10 holders) |
-| epoch | 1 hour (1,800 blocks) |
+| chain | Robinhood Chain (4663), Pons V2 bonding curves quoted in USDG |
+| selection | every token launched on the Pons V2 factory in one fixed 1 hour window, no survivorship filter |
+| tokens | 30 (from 827 launches in the window; rest had under 20 transfers or never reached 10 holders) |
+| epoch | 1 hour (35,363 blocks) |
 | epochs | 37 ingested, 30 scored, 7 held back for forward outcomes |
-| token-epochs | 480 |
-| RPC calls | 1,256 against `mainnet.base.org` |
+| token-epochs | 626 scored, 274 skipped as too small |
+| RPC calls | 1,372 against `rpc.mainnet.chain.robinhood.com` |
 
-**Why hourly epochs and not daily.** Free Base archive access is now gated behind
-a paid token on every endpoint tested. Only `mainnet.base.org` still serves logs
-publicly, in 2,000 block pages, reaching back roughly 7 days. Daily epochs were
-therefore impossible without paying. Hourly epochs are arguably the better
-resolution for freshly launched tokens anyway, but this was a constraint before it
-was a preference, and it should be read that way.
+**Why hourly epochs and not daily.** Robinhood Chain lands a block roughly every
+0.1 seconds, so an hour is 35,363 blocks and the 37 epoch replay already spans about
+1.31 million blocks per token. The public node serves that range without a key. At
+this block rate an hour is the natural unit: a day would be 848,000 blocks per
+epoch and would flatten the entire launch trajectory into three or four points.
+Here the resolution is a choice, not a funding constraint.
 
 ---
 
@@ -288,42 +291,45 @@ the cohort. Code: `engine/backtest_v3.mjs`, `engine/partial_v3.mjs`, outputs
 
 | | v1 cohort | v3 cohort |
 |---|---|---|
-| selection | every Uniswap V2 WETH pair in a 3 hour window, no liveness filter | Base tokens with sustained transfer activity |
-| tokens | 16 | 23 ingested, 21 scored |
-| epochs | 37 hourly | 48 hourly (30 scored + forward window) |
-| rows | 479 | 551 |
-| frozen on both inputs | 91.4% | **7.1%** |
-| forward change exactly 0 (k=7) | 91.4% | **3.1%** |
+| selection | every Pons V2 launch in a 1 hour window, no liveness filter | predecessor method: tokens picked for sustained transfer activity, which selects on survival |
+| tokens | 16 | 30 ingested, 30 scored |
+| epochs | 37 hourly | 37 hourly (30 scored + forward window) |
+| rows | 479 | 626 |
+| frozen on both inputs | 91.4% | **78%** |
+| forward change exactly 0 (k=7) | 91.4% | **35.5%** |
 
-The tie block is gone. This cohort can actually answer the question.
+The tie block is smaller but it is not gone. 78% of rows still sit frozen on both
+inputs, and at k=7 just over a third of forward changes are exactly zero. This
+cohort can answer the question; it answers it on the 138 rows that move.
 
-## Why the instrument replays 48 epochs but the test scores 30
+## Why the instrument replays 37 epochs but the test scores 30
 
 These are two different numbers and both are correct.
 
-**48 is the replay.** The v3 ingest covers Base blocks 51,091,736 to 51,178,136,
-which is 86,400 blocks at 1,800 blocks per epoch, so 48 hourly snapshots. The worm
-on the front page runs every one of them, epoch 0 through epoch 47. That is the
-full reconstructed window and nothing in it is hidden.
+**37 is the replay.** The cohort is drawn from Robinhood Chain blocks 60,512,037
+to 60,547,400, one hour of launches. Each token is then replayed for 37 hourly
+epochs counted from its own launch block, 35,363 blocks per epoch, so roughly 1.31
+million blocks per token. The worm on the front page runs every one of them, epoch
+0 through epoch 36. That is the full reconstructed window and nothing in it is
+hidden.
 
 **30 is the scoring window.** A row is only usable if there is a *later* snapshot
 to check it against. Every score at epoch `e` is graded on holder change at
 `e + k` for k = 3, 7 and 14 epochs, so the tail of the window has no outcome yet:
-an epoch 45 score has nowhere to land at k=14. `engine/backtest.mjs` sets
+an epoch 34 score has nowhere to land at k=14. `engine/backtest.mjs` sets
 `SCORING_EPOCHS = 30` and drops every entry with `epoch >= 30`, which leaves the
-last 18 epochs serving only as forward outcomes, never as predictions.
+last 7 epochs serving only as forward outcomes, never as predictions.
 
-**Why 30 and not 33.** The strict arithmetic allows epoch 33 (33 + 14 = 47, the
-last snapshot available). 30 was kept because the v1 run only had 37 ingested
-epochs and scored 30 of them, and holding the constant fixed is what makes v1, the
-ablation and v3 comparable line by line. Loosening it to 33 for v3 alone would buy
-about 10% more rows and cost the direct comparison. The tail epochs of an
-RPC-reconstructed window are also the thinnest, so the extra rows would be the
-weakest ones.
+**Why 30 and not 22.** The strict arithmetic at 37 ingested epochs allows epoch 22
+(22 + 14 = 36, the last snapshot available), which is why the k=14 horizon reports
+486 rows rather than 626: entries past epoch 22 have no k=14 outcome and are
+dropped from that horizon only. 30 was kept as the scoring constant because the v1
+run scored 30, and holding it fixed is what makes v1, the ablation and v3
+comparable line by line. The k=3 and k=7 horizons keep all 626 rows.
 
-So: 48 epochs computed and displayed, 30 epochs scored, 18 epochs spent as the
-forward horizon. The 551 rows in every table below come from that 30 epoch slice,
-not from all 48.
+So: 37 epochs computed and displayed, 30 epochs scored, 7 epochs spent as the
+forward horizon. The 626 rows in every table below come from that 30 epoch slice,
+not from all 37.
 
 ## The v3 signal adapter, and where it differs
 

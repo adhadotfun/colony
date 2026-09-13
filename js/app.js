@@ -58,10 +58,10 @@ const num = (v, d = 0) => (v == null ? '···' : Number(v).toLocaleString('en-U
   minimumFractionDigits: d, maximumFractionDigits: d,
 }));
 
-/** Base produces a block roughly every 2s, so block delta converts to wall clock. */
+/** Robinhood Chain produces a block roughly every 0.1s, so block delta converts to wall clock. */
 function blockTime(block) {
   const genMs = Date.parse(state.feed.source.generated_utc);
-  return new Date(genMs - (state.headBlock - block) * 2000);
+  return new Date(genMs - (state.headBlock - block) * 101.8);
 }
 
 const stamp = (d) => d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';

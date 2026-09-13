@@ -1,0 +1,34 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: node syntax check
+        run: for f in js/*.js engine/*.mjs; do node --check "$f"; done
+
+      - name: python syntax check
+        run: python3 -m py_compile server.py scripts/*.py
+
+      - name: backtest reproducibility
+        run: |
+          node engine/backtest_v3.mjs > /dev/null
+          git show HEAD:out/backtest_v3.json > /tmp/committed.json
+          python3 -c "import json;a=json.load(open('out/backtest_v3.json'));b=json.load(open('/tmp/committed.json'));[d.pop(k,None) for d in (a,b) for k in ('generated_at','generated_utc','timestamp')];assert a==b,'engine output drifted from committed out/backtest_v3.json'"
+
+      - name: no em dash or en dash
+        run: '! grep -rnP "[\x{2013}\x{2014}]" --include=*.html --include=*.md --include=*.js --include=*.mjs --include=*.css . '

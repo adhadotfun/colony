@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>check it yourself</title>
+<meta name="description" content="This page re-runs the numbers on the front page in your browser, from the stored inputs, and compares them field by field against the stored output.">
+<meta property="og:title" content="check it yourself">
+<meta property="og:description" content="This page re-runs the numbers on the front page in your browser, from the stored inputs, and compares them field by field against the stored output.">
+<meta property="og:image" content="https://colony.watch/assets/icon-512.png">
+<meta property="og:url" content="https://colony.watch/verify">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://colony.watch/verify">
 <link rel="icon" href="./assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
 <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
@@ -175,7 +182,7 @@ $('run').addEventListener('click', async () => {
     initConnectome(JSON.parse(conn));
 
     const meta = snaps.meta || {};
-    const w = meta.window || {};
+    const w = meta.cohort_window || meta.window || {};
     $('w-start').textContent = w.start_block ?? '?';
     $('w-end').textContent = w.end_block ?? '?';
     $('w-chain').textContent = meta.chain_id ?? 4663;

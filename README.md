@@ -23,22 +23,31 @@ byte and replaces the ornament with a scored, recomputable feed.
 ```
 engine/colony.mjs      scoring: snapshot -> signal -> plan -> worm -> path efficiency
 engine/stats.mjs       spearman, permutation test, cluster bootstrap. no dependencies
-engine/backtest.mjs    the 30-epoch back-test, writes out/feed.json and out/backtest.json
+engine/backtest_v3.mjs the 30-epoch back-test, writes out/backtest_v3.json and out/scored_v3.json
+engine/feed_v3.mjs     writes the signed public feed, out/feed_v3.json
+engine/partial_v3.mjs  writes out/partial_v3.json
 js/engine.js           the ported connectome engine, unchanged calibration
 js/body.js             muscle state to body geometry
-js/arena.js            the arena, leaderboard, withheld panel and back-test view
-data/snapshots.json    real per-epoch holder snapshots ingested from chain
-data/connectome.json   OpenWorm c302 adjacency, 397 cells, 3,683 connections
-out/                   generated feed and back-test report
+js/app.js              the front end: arena, leaderboard, withheld panel and replay
+js/brain.js            cell positions on the strip, from data/cell_layout.json
+data/snapshots_v3.json    real per-epoch holder snapshots ingested from chain
+data/connectome.json      OpenWorm c302 adjacency, 397 cells, 3,683 connections
+out/                   generated feed, scored rows and back-test report
+scripts/               ingest scripts: ingest.py, ingest_colony_rh.py
+server.py              static file server for hosts that want a process
+verify.html            re-runs the numbers in your browser
+docs.html              the report, rendered from BACKTEST.md
 ```
 
 ## Run it
 
 ```bash
-node engine/backtest.mjs      # scores every token-epoch, runs the back-test
+node engine/backtest_v3.mjs    # scores every token-epoch, runs the back-test
+python3 server.py              # serve the site on :8080, or set PORT
 ```
 
-Then serve the directory and open `index.html`.
+Then open `index.html`, or `/docs` for the report and `/verify` to re-run the
+numbers yourself.
 
 ## The three design rules
 
@@ -100,3 +109,12 @@ metric.
    liquidity sits somewhere the factory does not know about.
 
 None of these have clean fixes. Shipping them beside the number is the point.
+
+## Verify
+
+Nothing on the site asks for trust. Open `/docs` for the full report, or
+`/verify` to re-run the engine in your own browser and compare against the
+stored output field by field. Pushes and pull requests run the same checks in
+CI (`.github/workflows/check.yml`): syntax checks over the JS and Python, a
+re-run of the back-test compared against `out/backtest_v3.json`, and a scan
+that fails the build if an em dash or en dash lands in any source file.

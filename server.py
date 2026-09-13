@@ -36,8 +36,32 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path.split("?")[0] not in ("/health",):
             super().log_message(fmt, *args)
 
+    def _resolve(self):
+        # Clean URLs. Returns True when a redirect has already been sent.
+        if "?" in self.path:
+            p, q = self.path.split("?", 1)
+            q = "?" + q
+        else:
+            p, q = self.path, ""
+        if p.endswith(".html"):
+            clean = p[:-5]
+            if clean.endswith("/index"):
+                clean = clean[:-5]
+            if clean == "":
+                clean = "/"
+            self.send_response(301)
+            self.send_header("Location", clean + q)
+            self.end_headers()
+            return True
+        segment = p.rsplit("/", 1)[-1]
+        if "." not in segment and p != "/":
+            candidate = os.path.join(ROOT, p.lstrip("/") + ".html")
+            if os.path.isfile(candidate):
+                self.path = p + ".html" + q
+        return False
+
     def do_GET(self):
-        if self.path == "/health":
+        if self.path.split("?")[0] == "/health":
             body = b"ok"
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
@@ -45,7 +69,14 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if self._resolve():
+            return
         super().do_GET()
+
+    def do_HEAD(self):
+        if self._resolve():
+            return
+        super().do_HEAD()
 
 
 if __name__ == "__main__":

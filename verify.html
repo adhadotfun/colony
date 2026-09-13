@@ -58,7 +58,7 @@
   <h1 class="doc">Check it yourself</h1>
   <p>Nothing here asks you to trust the numbers on the front page. This page re-runs them. It loads the stored inputs, re-executes the same engine the site ships, and compares the result against the stored output field by field. Your browser does the work, so you can watch it in the network tab.</p>
 
-  <h2 class="sec">Level 1 — recompute the simulation</h2>
+  <h2 class="sec">Level 1. Recompute the simulation</h2>
   <div class="sec__sub">deterministic · runs entirely in your browser</div>
   <p>Every epoch derives a seed from the cohort root, turns each token's holder snapshot into a signal, plans a tick budget from that signal, and runs the worm. All of it is deterministic. If our stored feed disagrees with your browser by a single digit, the rows below go red.</p>
 
@@ -73,11 +73,11 @@
     <tbody id="tb"></tbody>
   </table>
 
-  <p class="limit"><b>What this does not prove.</b> Level 1 verifies the simulation, not the chain data. The holder counts, entries, exits and concentration come from our snapshot of Base mainnet. If that snapshot is wrong, every check above still passes. To close that gap you need Level 2.</p>
+  <p class="limit"><b>What this does not prove.</b> Level 1 verifies the simulation, not the chain data. The holder counts, entries, exits and concentration come from our snapshot of Robinhood Chain. If that snapshot is wrong, every check above still passes. To close that gap you need Level 2.</p>
 
-  <h2 class="sec">Level 2 — re-derive the chain data</h2>
+  <h2 class="sec">Level 2. Re-derive the chain data</h2>
   <div class="sec__sub">needs your own archive RPC · not runnable in this page</div>
-  <p>The window is Base mainnet blocks <code id="w-start">…</code> to <code id="w-end">…</code>, chain <code id="w-chain">…</code>. Re-derive holder sets by replaying Transfer logs for each token across that range against an archive node you control, then diff against <code>data/snapshots_v3.json</code>. We cannot do this for you in a browser tab, and you should not take our word for it either. The ingest script that produced the snapshot ships in the repo.</p>
+  <p>The window is Robinhood Chain blocks <code id="w-start">…</code> to <code id="w-end">…</code>, chain <code id="w-chain">…</code>. Re-derive holder sets by replaying Transfer logs for each token across that range against an archive node you control, then diff against <code>data/snapshots_v3.json</code>. We cannot do this for you in a browser tab, and you should not take our word for it either. The ingest script that produced the snapshot ships in the repo as <code>scripts/ingest_colony_rh.py</code>.</p>
 
   <h2 class="sec">The raw files</h2>
   <div class="sec__sub">static json · same origin · no api</div>
@@ -178,9 +178,9 @@ $('run').addEventListener('click', async () => {
     const w = meta.window || {};
     $('w-start').textContent = w.start_block ?? '?';
     $('w-end').textContent = w.end_block ?? '?';
-    $('w-chain').textContent = meta.chain_id ?? 8453;
+    $('w-chain').textContent = meta.chain_id ?? 4663;
 
-    const cohortRoot = `${w.start_block}:${meta.chain_id || 8453}`;
+    const cohortRoot = `${w.start_block}:${meta.chain_id || 4663}`;
     let pass = 0, fail = 0;
     const mark = (ok) => { ok ? pass++ : fail++; };
 

@@ -38,6 +38,8 @@ const state = {
   fired: new Set(),
   cam: 'fit',
   zoom: 1,
+  zoomTo: 1,          // wheel and buttons move this; zoom eases toward it
+  zoomAt: { x: 0, y: 0 }, // cursor anchor, relative to canvas centre
   offset: { x: 0, y: 0 },
   cells: [],
   drag: null,
@@ -236,6 +238,49 @@ function viewTransform(w, h) {
   return { scale, cx: cx - state.offset.x / scale, cy: cy - state.offset.y / scale };
 }
 
+/**
+ * Infinite graph paper. The world step is chosen from a 1/2/5 ladder so the
+ * on-screen spacing always lands in a readable band, and two levels are drawn
+ * at once: as you zoom out the fine level fades away exactly while the coarse
+ * level takes over, so the lattice restacks instead of vanishing.
+ */
+function drawGrid(ctx, w, h, scale, cx, cy) {
+  const MIN = 34;                                   // px: tightest major spacing
+
+  // Power of two ladder, so every coarser level's lines are a strict subset of
+  // the finer one's. That is what makes the restack seamless: the only lines
+  // that ever fade are the midpoints between major lines, and the major lattice
+  // itself is continuously on screen at 34px to 68px, at full strength, always.
+  const stepWorld = Math.pow(2, Math.ceil(Math.log2(MIN / scale)));
+  const major = stepWorld * scale;                  // 34px .. 68px by construction
+
+  const ox = w / 2 - cx * scale;
+  const oy = h / 2 - cy * scale;
+
+  const line = (stepPx, alpha, width) => {
+    if (alpha <= 0.004 || !isFinite(stepPx) || stepPx < 3) return;
+    const sx = ((ox % stepPx) + stepPx) % stepPx;
+    const sy = ((oy % stepPx) + stepPx) % stepPx;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let x = sx; x < w; x += stepPx) { ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, h); }
+    for (let y = sy; y < h; y += stepPx) { ctx.moveTo(0, y + 0.5); ctx.lineTo(w, y + 0.5); }
+    ctx.stroke();
+  };
+
+  // midpoints fade in as the major cell grows, and are fully faded at the exact
+  // moment the ladder halves and they become the new major lines
+  const t = Math.max(0, Math.min(1, (major - MIN) / MIN));
+
+  ctx.save();
+  ctx.strokeStyle = RULE;
+  line(major, 1, 1);                                // always present
+  line(major / 2, t, 1);                            // subdivision, crossfades
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 function drawStage() {
   const cv = $('stage-canvas');
   const { ctx, w, h } = fitCanvas(cv);
@@ -246,19 +291,7 @@ function drawStage() {
   const px = (p) => w / 2 + (p.x - cx) * scale;
   const py = (p) => h / 2 + (p.y - cy) * scale;
 
-  const step = 10 * scale;
-  if (step > 6) {
-    ctx.strokeStyle = RULE;
-    ctx.lineWidth = 0.5;
-    ctx.globalAlpha = 0.75;
-    const ox = ((w / 2 - cx * scale) % step + step) % step;
-    const oy = ((h / 2 - cy * scale) % step + step) % step;
-    ctx.beginPath();
-    for (let x = ox; x < w; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
-    for (let y = oy; y < h; y += step) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
+  drawGrid(ctx, w, h, scale, cx, cy);
 
   const path = state.path;
   if (path.length > 1) {
@@ -362,9 +395,26 @@ function advance() {
   paintBrainLine();
 }
 
+/**
+ * Ease the live zoom toward the requested zoom and keep the point under the
+ * cursor pinned while it moves. The offset correction uses the zoom ratio,
+ * which equals the scale ratio, so it holds in both fit and free camera.
+ */
+function easeZoom() {
+  const d = state.zoomTo - state.zoom;
+  if (Math.abs(d) < state.zoom * 1e-4) { state.zoom = state.zoomTo; return; }
+  const prev = state.zoom;
+  state.zoom = prev + d * 0.18;                     // critically damped enough to feel instant
+  const r = state.zoom / prev;
+  const a = state.zoomAt;
+  state.offset.x = r * (state.offset.x - a.x) + a.x;
+  state.offset.y = r * (state.offset.y - a.y) + a.y;
+}
+
 let last = 0;
 function frame(ts) {
   if (ts - last > 55) { advance(); last = ts; }
+  easeZoom();
   drawStage();
   if (state.brain) state.brain.draw();
   requestAnimationFrame(frame);
@@ -383,8 +433,12 @@ function wireControls() {
   $('cam-follow').onclick = () => setCam('follow');
   $('cam-free').onclick = () => setCam('free');
   $('cam-fit').onclick = () => setCam('fit');
-  $('zoom-in').onclick = () => { state.zoom = Math.min(state.zoom * 1.35, 24); };
-  $('zoom-out').onclick = () => { state.zoom = Math.max(state.zoom / 1.35, 0.02); };
+  const nudge = (f) => {
+    state.zoomAt = { x: 0, y: 0 };                  // buttons zoom about centre
+    state.zoomTo = Math.max(0.02, Math.min(24, state.zoomTo * f));
+  };
+  $('zoom-in').onclick = () => nudge(1.35);
+  $('zoom-out').onclick = () => nudge(1 / 1.35);
 
   const hop = (d) => {
     const n = state.feed.n_epochs;
@@ -417,7 +471,12 @@ function wireControls() {
   cv.addEventListener('pointerup', () => { state.drag = null; });
   cv.addEventListener('wheel', (ev) => {
     ev.preventDefault();
-    state.zoom = Math.max(0.02, Math.min(24, state.zoom * (ev.deltaY < 0 ? 1.1 : 1 / 1.1)));
+    const r = cv.getBoundingClientRect();
+    state.zoomAt = { x: ev.clientX - r.left - r.width / 2, y: ev.clientY - r.top - r.height / 2 };
+    // scale the step by wheel delta so a trackpad flick and a mouse notch both feel right
+    const mag = Math.min(Math.abs(ev.deltaY) / 100, 3);
+    const f = Math.pow(1.22, (ev.deltaY < 0 ? 1 : -1) * Math.max(mag, 0.35));
+    state.zoomTo = Math.max(0.02, Math.min(24, state.zoomTo * f));
   }, { passive: false });
 
   window.addEventListener('keydown', (ev) => {

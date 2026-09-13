@@ -1,115 +1,102 @@
 # COLONY
 
-A 302-neuron nervous system, driven by on-chain holder data.
+One *C. elegans* connectome per token, one shared seed per epoch, one leaderboard,
+and a back-test that is allowed to fail in public.
 
-The wiring is the *C. elegans* connectome. The stimulus is the holder behaviour of a fixed
-cohort of Base mainnet tokens, hour by hour. Each epoch turns one token's holder snapshot
-into a chemotaxis signal, plans a tick budget from it, and runs the worm. What you see move
-on the front page is a simulation whose every input came off the chain.
+This is the successor to the single-worm instrument. The predecessor's engine was
+good and its product was decorative: chain state went in, an animal wiggled,
+nothing came back out that anyone could dispute. COLONY keeps the engine byte for
+byte and replaces the ornament with a scored, recomputable feed.
 
-Everything in this repository recomputes. Nothing here asks to be believed.
+## What changed
 
-## The honest version
-
-The back-test is in [BACKTEST.md](BACKTEST.md) and it is not flattering. Short version:
-
-- The worm does **not** predict holder growth on this cohort in any useful standalone sense.
-- `path_efficiency` is a deterministic function of `(growth, sellPressure, hhi)`, so it cannot
-  carry information those three lack. It was only ever defensible as a compression of them.
-- Controlled against its own raw inputs, the connectome arm carries a small real increment,
-  roughly **+0.10 to +0.14** across k=3/7/14, with intervals excluding zero.
-- The ablation arm is fully explained by raw sell pressure and should not be shipped as an
-  instrument. It is reported here rather than quietly dropped.
-- The cohort is **selected on survival**: these tokens were picked because they are actively
-  traded now, and forward growth is measured inside that same window. Every number above
-  sits under that caveat.
-
-If you want to predict holder growth on this universe, use raw growth and raw exit rate
-directly. The worm is a visualisation with a measurable but minor edge on top.
-
-## Check it yourself
-
-Open `verify.html`. It loads the stored inputs, re-executes the same engine module the front
-page ships, and diffs the result field by field in your browser. Ten checks:
-
-| check | what it proves |
-| --- | --- |
-| cohort window | the seed domain every epoch derives from matches the chain window |
-| snapshot sha256 | the exact bytes of the snapshot file served to you |
-| snapshot root | a format-independent root rebuilt row by row from 1,104 parsed records |
-| connectome sha256 | the wiring file matches the hash the feed commits to |
-| epoch seeds | all 48 seeds re-derive from the cohort window |
-| derived signal | 1,104 token-epoch signals recompute from the raw holder snapshot |
-| tick plan | 1,104 tick budgets recompute from those signals |
-| path efficiency | 1,104 simulation scores reproduce from seed and plan |
-| net travel | same |
-| reversals | same |
-
-There is no second implementation kept for verification, because a second implementation is
-a place for the two to quietly disagree. `verify.html` imports `js/engine.js`, the same module
-`index.html` imports.
-
-**What Level 1 does not prove.** It verifies the simulation, not the chain data. If the
-snapshot of Base mainnet is wrong, every check above still passes. To close that gap, replay
-`Transfer` logs for each token across the window against an archive node you control and diff
-against `data/snapshots_v3.json`. The ingest script that produced it is `scripts/ingest.py`.
-
-## The window
-
-| | |
-| --- | --- |
-| chain | Base mainnet, chain id 8453 |
-| blocks | 51,091,736 to 51,178,136 |
-| epoch | 1,800 blocks, about 1 hour |
-| epochs | 48 (30 of them scored in the back-test) |
-| tokens | 23 selected from 30 candidates |
-| selection | Base mid-caps with sustained transfer activity across the window |
-
-This build is a frozen replay, not a live feed. Nothing fetches at runtime.
+| | predecessor | COLONY |
+|---|---|---|
+| output | an animation | a rank per token per epoch, plus a signed JSON feed |
+| meaning | absolute, thresholds picked by feel | relative within an epoch cohort |
+| falsifiable | no | yes, and the back-test is in `BACKTEST.md` |
+| quiet tokens | look identical to healthy ones | withheld with a stated reason |
+| PRNG | per token | shared per epoch, so it adds zero cross-token variance |
 
 ## Layout
 
 ```
-index.html          front page, live simulation view
-verify.html         the audit page described above
-docs.html           renders BACKTEST.md
-BACKTEST.md         full method and measured result
-js/engine.js        signal, tick planning, locomotion, scoring
-js/app.js           front page wiring and camera
-js/brain.js         connectome view
-js/body.js          body render
-engine/*.mjs        node pipeline: feed build, back-test, partial correlations
-data/connectome.json    clean-room derivation of White et al. 1986, provenance inside
-data/cell_layout.json   anatomical cell positions
-data/snapshots_v3.json  the chain snapshot, the input Level 2 exists to challenge
-out/*.json          generated feed, scores, back-test, partials
-scripts/ingest.py   the ingest that produced the snapshot
+engine/colony.mjs      scoring: snapshot -> signal -> plan -> worm -> path efficiency
+engine/stats.mjs       spearman, permutation test, cluster bootstrap. no dependencies
+engine/backtest.mjs    the 30-epoch back-test, writes out/feed.json and out/backtest.json
+js/engine.js           the ported connectome engine, unchanged calibration
+js/body.js             muscle state to body geometry
+js/arena.js            the arena, leaderboard, withheld panel and back-test view
+data/snapshots.json    real per-epoch holder snapshots ingested from chain
+data/connectome.json   OpenWorm c302 adjacency, 397 cells, 3,683 connections
+out/                   generated feed and back-test report
 ```
 
-## Rebuild
+## Run it
 
 ```bash
-node engine/feed_v3.mjs        # snapshot -> feed, recomputes both integrity roots
-node engine/backtest_v3.mjs    # 30-epoch back-test, both arms, bootstrapped CIs
-node engine/partial_v3.mjs     # partial correlations against raw inputs
+node engine/backtest.mjs      # scores every token-epoch, runs the back-test
 ```
 
-The feed build is deterministic. Regenerating it produces an identical file apart from the
-`generated_utc` stamp, which is how the integrity roots stay meaningful.
+Then serve the directory and open `index.html`.
 
-Serve the directory over HTTP and open it. Any static server will do:
+## The three design rules
 
-```bash
-python3 -m http.server 8080
-```
+**1. Nothing is fitted to the outcome.** Every engine constant is inherited from
+the predecessor's calibration. The confidence threshold (200 of 256 ticks) was set
+from the tick-budget sweep *before* any outcome data was touched. Tuning the
+mapping against the back-test would not produce an oracle, it would produce an
+overfitted worm.
 
-## Notes on the connectome
+**2. Scores are relative.** Absolute path efficiency is meaningless because the
+saturation constants (chemotaxis at 10% growth, nose touch at 1%) were chosen so
+the animation looked lively, not because those numbers mean anything about a
+market. Ranking within an epoch cohort needs no magic constants and self-normalises
+as conditions drift.
 
-`data/connectome.json` is a clean-room derivation of the White et al. 1986 wiring, with its
-provenance block inside the file. Cell positions in `data/cell_layout.json` are anatomical:
-x runs 0 to 800 microns nose to tail, y is dorsal/ventral. MI is classified as a motor neuron,
-which is why the legend reads 131 motor and 97 muscle rather than the split you may expect.
+**3. A reading that cannot express is withheld, not shown small.** Below roughly
+200 ticks of budget the concentration arm barely separates, so a low HHI and a high
+one produce nearly the same path. Those token-epochs are excluded from the
+leaderboard with the reason printed.
 
-## Licence
+## The control that matters
 
-MIT.
+`path_efficiency` is a deterministic function of `(growth, sellPressure, hhi)`. It
+therefore **cannot** contain information those three inputs lack. The only
+defensible claim is that it is a *useful compression* of them.
+
+So the back-test reports the worm's correlation next to the correlation of each raw
+input, on the same rows, with the same test. If a single raw input beats the worm,
+the worm is a lossy wrapper and `BACKTEST.md` says exactly that. That comparison is
+the point of the exercise, not a footnote to it.
+
+## Cohort honesty
+
+The cohort is every token launched on the Pons V2 bonding curve factory on
+Robinhood Chain inside one fixed 1 hour window, blocks 60,512,037 to 60,547,400.
+827 launches landed in that window; the 30 kept are those with at least 20
+transfers and a peak of at least 10 holders. There is **no filter for
+whether the token still exists today**, so failed launches stay in the sample. If a
+correlation only appears after dropping the dead ones, that is survivorship, not
+signal.
+
+Epochs are counted from each token's own launch block rather than from a wall-clock
+date, so what is being compared is launch trajectories at equivalent age.
+
+## Known gameable surfaces
+
+Inherited from the predecessor's best habit: publish the failure modes next to the
+metric.
+
+1. **HHI is trivially split.** A whale wanting a healthy-looking worm spreads across
+   50 addresses for one block. Concentration measures address distribution, not
+   beneficial ownership.
+2. **Growth is buyable for one block.** The snapshot reads a single block, so dust
+   to 200 fresh addresses just before it saturates the chemotaxis budget. Sampling
+   the minimum across a window of blocks raises the cost but does not remove it.
+3. **The LP set is a semantic claim, not a chain fact.** Here it is resolved
+   mechanically from the Pons V2 launch factory, which removes the predecessor's
+   trusted operator input on this cohort but would not generalise to a token whose
+   liquidity sits somewhere the factory does not know about.
+
+None of these have clean fixes. Shipping them beside the number is the point.

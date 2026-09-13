@@ -82,8 +82,8 @@ the point of the exercise, not a footnote to it.
 ## Cohort honesty
 
 The cohort is every token launched on the Pons V2 bonding curve factory on
-Robinhood Chain inside one fixed 1 hour window, blocks 60,512,037 to 60,547,400.
-827 launches landed in that window; the 30 kept are those with at least 20
+Robinhood Chain inside one fixed 1 hour window, blocks 60,546,473 to 60,581,836.
+799 launches landed in that window; the 30 kept are those with at least 20
 transfers and a peak of at least 10 holders. There is **no filter for
 whether the token still exists today**, so failed launches stay in the sample. If a
 correlation only appears after dropping the dead ones, that is survivorship, not

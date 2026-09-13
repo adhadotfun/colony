@@ -295,40 +295,43 @@ the cohort. Code: `engine/backtest_v3.mjs`, `engine/partial_v3.mjs`, outputs
 | | v1 cohort | v3 cohort |
 |---|---|---|
 | selection | every Pons V2 launch in a 1 hour window, no liveness filter | predecessor method: tokens picked for sustained transfer activity, which selects on survival |
-| tokens | 16 | 23 ingested, 21 scored |
-| epochs | 37 hourly | 48 hourly (30 scored + forward window) |
-| rows | 479 | 551 |
-| frozen on both inputs | 91.4% | **7.1%** |
-| forward change exactly 0 (k=7) | 91.4% | **3.1%** |
+| tokens | 16 | 30 ingested, 30 scored |
+| epochs | 37 hourly | 37 hourly (30 scored + forward window) |
+| rows | 479 | 730 (569 at k=14) |
+| frozen on both inputs | 91.4% | 63.8% |
+| forward change exactly 0 (k=7) | 91.4% | 40.5% |
 
-The tie block is essentially gone: 7.1% of rows frozen on both inputs, and at k=7
-only 3.1% of forward changes are exactly zero. This cohort can answer the
-question.
+The tie block shrank but did not vanish: 63.8% of rows are still frozen on both
+inputs, and at k=7 40.5% of forward changes are exactly zero. That is a third
+of v1's dead weight, not none of it. The cohort can answer the question, with
+that caveat carried into every correlation below.
 
 ## Why the instrument replays 37 epochs but the test scores 30
 
 These are two different numbers and both are correct.
 
-**48 is the replay.** The v3 cohort is drawn from Base blocks 51,091,736 to
-51,178,136, 1,800 blocks per hourly epoch, 48 epochs per token. The worm on the
+**37 is the replay.** The v3 cohort is drawn from Robinhood Chain blocks 60,546,473 to
+60,581,836, 35,363 blocks per hourly epoch, 37 epochs per token. The worm on the
 front page runs every one of them. That is the full reconstructed window and
 nothing in it is hidden.
 
 **30 is the scoring window.** A row is only usable if there is a *later* snapshot
 to check it against. Every score at epoch `e` is graded on holder change at
 `e + k` for k = 3, 7 and 14 epochs, so the tail of the window has no outcome yet:
-an epoch 34 score has nowhere to land at k=14. `engine/backtest.mjs` sets
+an epoch 34 score has nowhere to land at k=14. `engine/backtest_v3.mjs` sets
 `SCORING_EPOCHS = 30` and drops every entry with `epoch >= 30`, which leaves the
 last 7 epochs serving only as forward outcomes, never as predictions.
 
 **Why 30 and not more.** 30 was kept as the scoring constant because the v1 run
 scored 30, and holding it fixed is what makes v1, the ablation and v3 comparable
-line by line. With 48 ingested epochs every scored row has a k=14 outcome
-available, so all three horizons keep the full 551 rows.
+line by line. With 37 ingested epochs, k=3 and k=7 keep all 730 eligible rows;
+k=14 keeps 569, because a k=14 outcome only exists for epochs 0 to 22. 170 rows
+were skipped before scoring for having fewer than 10 holders. `out/backtest_v3.json`
+carries these counts under `horizons.*.n` and `skipped`.
 
-So: 48 epochs computed and displayed, 30 epochs scored, the remainder spent as
-the forward horizon. The 551 rows in every table below come from that 30 epoch
-slice.
+So: 37 epochs computed and displayed, 30 epochs scored, the remainder spent as
+the forward horizon. The 730 rows in every table below come from that 30 epoch
+slice (569 at k=14).
 
 ## The v3 signal adapter, and where it differs
 

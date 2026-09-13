@@ -1,13 +1,17 @@
 # The 30-epoch back-test
 
-**Verdict: on this cohort the shipped mapping does show a positive, significant
-association with forward holder growth at 3 and 7 epochs, and none at 14. The raw
-inputs it compresses are at least as strong, so the compression is not proven to
-add anything. The confidence gate still mutes 78% of the rows. Reported in full
-rather than buried.**
+**Verdict: the one place the shipped mapping earned its keep was the Base survivor
+cohort, where it carried a small increment of +0.10 to +0.14 over its own raw
+inputs. That result does not replicate. Re-run on a Robinhood Chain launch cohort,
+every arm collapses into its confidence interval and the partials all straddle
+zero. On both chains the raw inputs beat the compression, and even their sign is
+not stable across chains. Treat the worm as a visualisation, not a predictor.
+Reported in full rather than buried.**
 
 Generated 2026-09-13. Cohort, feed and code are in this directory, so every number
-below recomputes from public Robinhood Chain data.
+below recomputes from public chain data. Three cohorts are reported: a Base launch
+cohort (v1), a Base survivor cohort (v3), and a Robinhood Chain launch cohort
+(v4). Each section names its own chain; numbers are never carried across them.
 
 ---
 
@@ -28,20 +32,19 @@ input, over the identical rows.
 
 | | |
 |---|---|
-| chain | Robinhood Chain (4663), Pons V2 bonding curves quoted in USDG |
-| selection | every token launched on the Pons V2 factory in one fixed 1 hour window, no survivorship filter |
-| tokens | 30 (from 827 launches in the window; rest had under 20 transfers or never reached 10 holders) |
-| epoch | 1 hour (35,363 blocks) |
+| chain | Base (8453), Uniswap V2 WETH pairs |
+| selection | every Uniswap V2 WETH pair created in one fixed 3 hour window, at least 20 transfers and a peak of 10 holders, no survivorship or liveness filter |
+| tokens | 16 |
+| epoch | 1 hour |
 | epochs | 37 ingested, 30 scored, 7 held back for forward outcomes |
-| token-epochs | 626 scored, 274 skipped as too small |
-| RPC calls | 1,372 against `rpc.mainnet.chain.robinhood.com` |
+| token-epochs | 479 scored |
+| RPC calls | public Base RPC, no key |
 
-**Why hourly epochs and not daily.** Robinhood Chain lands a block roughly every
-0.1 seconds, so an hour is 35,363 blocks and the 37 epoch replay already spans about
-1.31 million blocks per token. The public node serves that range without a key. At
-this block rate an hour is the natural unit: a day would be 848,000 blocks per
-epoch and would flatten the entire launch trajectory into three or four points.
-Here the resolution is a choice, not a funding constraint.
+**Why hourly epochs and not daily.** A launch curve does most of its work in the
+first two days. At daily resolution the entire trajectory collapses into three or
+four points, which is too coarse to score anything. An hour keeps 37 usable
+observations per token and still fits inside what a public node will serve
+without a key.
 
 ---
 
@@ -292,26 +295,24 @@ the cohort. Code: `engine/backtest_v3.mjs`, `engine/partial_v3.mjs`, outputs
 | | v1 cohort | v3 cohort |
 |---|---|---|
 | selection | every Pons V2 launch in a 1 hour window, no liveness filter | predecessor method: tokens picked for sustained transfer activity, which selects on survival |
-| tokens | 16 | 30 ingested, 30 scored |
-| epochs | 37 hourly | 37 hourly (30 scored + forward window) |
-| rows | 479 | 626 |
-| frozen on both inputs | 91.4% | **78%** |
-| forward change exactly 0 (k=7) | 91.4% | **35.5%** |
+| tokens | 16 | 23 ingested, 21 scored |
+| epochs | 37 hourly | 48 hourly (30 scored + forward window) |
+| rows | 479 | 551 |
+| frozen on both inputs | 91.4% | **7.1%** |
+| forward change exactly 0 (k=7) | 91.4% | **3.1%** |
 
-The tie block is smaller but it is not gone. 78% of rows still sit frozen on both
-inputs, and at k=7 just over a third of forward changes are exactly zero. This
-cohort can answer the question; it answers it on the 138 rows that move.
+The tie block is essentially gone: 7.1% of rows frozen on both inputs, and at k=7
+only 3.1% of forward changes are exactly zero. This cohort can answer the
+question.
 
 ## Why the instrument replays 37 epochs but the test scores 30
 
 These are two different numbers and both are correct.
 
-**37 is the replay.** The cohort is drawn from Robinhood Chain blocks 60,512,037
-to 60,547,400, one hour of launches. Each token is then replayed for 37 hourly
-epochs counted from its own launch block, 35,363 blocks per epoch, so roughly 1.31
-million blocks per token. The worm on the front page runs every one of them, epoch
-0 through epoch 36. That is the full reconstructed window and nothing in it is
-hidden.
+**48 is the replay.** The v3 cohort is drawn from Base blocks 51,091,736 to
+51,178,136, 1,800 blocks per hourly epoch, 48 epochs per token. The worm on the
+front page runs every one of them. That is the full reconstructed window and
+nothing in it is hidden.
 
 **30 is the scoring window.** A row is only usable if there is a *later* snapshot
 to check it against. Every score at epoch `e` is graded on holder change at
@@ -320,16 +321,14 @@ an epoch 34 score has nowhere to land at k=14. `engine/backtest.mjs` sets
 `SCORING_EPOCHS = 30` and drops every entry with `epoch >= 30`, which leaves the
 last 7 epochs serving only as forward outcomes, never as predictions.
 
-**Why 30 and not 22.** The strict arithmetic at 37 ingested epochs allows epoch 22
-(22 + 14 = 36, the last snapshot available), which is why the k=14 horizon reports
-486 rows rather than 626: entries past epoch 22 have no k=14 outcome and are
-dropped from that horizon only. 30 was kept as the scoring constant because the v1
-run scored 30, and holding it fixed is what makes v1, the ablation and v3
-comparable line by line. The k=3 and k=7 horizons keep all 626 rows.
+**Why 30 and not more.** 30 was kept as the scoring constant because the v1 run
+scored 30, and holding it fixed is what makes v1, the ablation and v3 comparable
+line by line. With 48 ingested epochs every scored row has a k=14 outcome
+available, so all three horizons keep the full 551 rows.
 
-So: 37 epochs computed and displayed, 30 epochs scored, 7 epochs spent as the
-forward horizon. The 626 rows in every table below come from that 30 epoch slice,
-not from all 37.
+So: 48 epochs computed and displayed, 30 epochs scored, the remainder spent as
+the forward horizon. The 551 rows in every table below come from that 30 epoch
+slice.
 
 ## The v3 signal adapter, and where it differs
 
@@ -425,7 +424,8 @@ Three further limits, none of them fixed by more rows:
 - **21 tokens.** The clustered CIs already price this in, which is why they are
   wide, but 21 clusters is a small bootstrap.
 - **48 hours, one regime.** Every row comes from a single two-day window on one
-  chain. Nothing here says the relationship survives a different tape.
+  chain. Whether the relationship survives a different tape is tested directly in
+  the Robinhood Chain section below, and the answer is no.
 - **Holder count is not price.** The whole project predicts holder growth, which
   is a distribution measure, not a return. A token can gain holders and fall.
 
@@ -444,3 +444,150 @@ the truth rather than one replacing the other.
 - Anyone wanting to predict holder growth on this universe should use raw growth
   and raw exit rate directly. The worm is a visualisation with a measurable but
   minor edge on top, not a replacement for the two numbers feeding it.
+
+---
+
+# v4 cohort: does any of it survive a different chain?
+
+Everything above comes from Base. A result that only exists on one chain in one
+48 hour window is not a result yet, it is a coincidence with error bars. So the
+whole pipeline was re-pointed at a second chain and rerun unchanged.
+
+| | |
+|---|---|
+| chain | Robinhood Chain (4663) |
+| RPC | `https://rpc.mainnet.chain.robinhood.com`, public, no key |
+| venue | Pons V2 bonding curves, factory `0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e`, quoted in USDG `0x5fc5360d0400a0fd4f2af552add042d716f1d168` |
+| selection | every token launched on that factory in one fixed 1 hour window, blocks 60,546,473 to 60,581,836, no survivorship or liveness filter |
+| tokens | 30 selected from 799 candidates (the rest never cleared the minimum transfer and holder floor) |
+| epoch | 1 hour (35,363 blocks; RH lands a block roughly every 0.1 seconds) |
+| epochs | 37 ingested, 30 scored |
+| rows | 730 scored token-epochs |
+| RPC calls | 1,872 |
+
+Nothing in the engine changed between chains. Same connectome, same knees, same
+scoring code, same permutation and token-clustered bootstrap. Only the snapshot
+file is different.
+
+## A defect that would have been published as a finding
+
+The first Robinhood ingest never emitted the `exits` field. Sell pressure is
+`exits / prev_holders`, so every row came back with sell pressure exactly zero,
+the degeneracy report said `sell_zero_pct: 100%`, and arm A appeared to predict
+forward growth at +0.218 / +0.308 / +0.126.
+
+That number was a bug, not a chain. Reading it at face value would have been a
+claim that Robinhood Chain tokens have no sell-side at all, which is obviously
+false and trivially falsifiable by anyone who opened an explorer. The ingest was
+fixed to count entries and exits per epoch the same way the Base ingest does, the
+full 30 token pull was rerun from scratch rather than patched in place, and every
+number in this section comes from that corrected run. The wrong figures are
+recorded here rather than deleted, because a study that only shows its clean runs
+is not showing its work.
+
+## Result: nothing survives the chain change
+
+Spearman against forward holder change, 5,000 iteration permutation test, 95% CI
+bootstrapped over token clusters.
+
+| horizon | arm A (shipped) | CI | arm B (no growth) | CI |
+|---|---|---|---|---|
+| k=3 | +0.135 | [-0.010, +0.283] | -0.097 | [-0.204, +0.034] |
+| k=7 | +0.101 | [-0.069, +0.264] | -0.089 | [-0.186, +0.032] |
+| k=14 | 0.000 | [-0.250, +0.236] | -0.165 | [-0.317, +0.026] |
+
+**Every interval straddles zero.** Several of the permutation p-values look
+respectable (arm A k=3 at p=0.030, arm B k=14 at p=0.0002) and every one of them
+is an artifact of pretending 730 autocorrelated rows off 30 tokens are 730
+independent observations. Once the bootstrap resamples by token, there is nothing
+left to report.
+
+The partials say the same thing. Residualise both the score and the outcome on
+raw growth and raw exit rate, then correlate what is left:
+
+| horizon | arm B partial | CI | arm A partial | CI |
+|---|---|---|---|---|
+| k=3 | -0.071 | [-0.170, +0.055] | +0.006 | [-0.274, +0.239] |
+| k=7 | -0.051 | [-0.136, +0.052] | -0.038 | [-0.360, +0.210] |
+| k=14 | -0.143 | [-0.285, +0.018] | -0.107 | [-0.485, +0.185] |
+
+On Base, arm A's partial was positive at all three horizons with intervals
+excluding zero. Here it is +0.006, -0.038, -0.107, and every interval contains
+zero. **The one finding this project could point to does not replicate.**
+
+The confidence gate behaves as designed and mutes most of the cohort: arm A is
+defined on 264 of 730 rows, because 63.8% of rows are frozen on both inputs. The
+launch tape is quieter than the survivor tape, which is what an unfiltered launch
+cohort is supposed to look like.
+
+## Cross-chain comparison
+
+Same engine, same knees, same scoring window, two chains:
+
+| | Base v3 (survivor) | Robinhood v4 (launch) |
+|---|---|---|
+| chain | Base 8453, Uniswap V2 / CoinGecko universe | Robinhood 4663, Pons V2 bonding curves |
+| selection bias | selected on survival | none, every launch in the window |
+| tokens / rows | 21 / 551 | 30 / 730 |
+| frozen on both inputs | 7.1% | 63.8% |
+| forward change exactly 0 (k=7) | 3.1% | 40.5% |
+| arm A defined on | 512 rows | 264 rows |
+| arm A vs raw growth | -0.101 | +0.592 |
+| arm A vs arm B | +0.380 | +0.416 |
+| arm A partial increment | +0.10 to +0.14, excludes zero | -0.11 to +0.01, straddles zero |
+
+And the raw inputs, which is where it gets interesting:
+
+| input, vs forward holder change | Base v3 | Robinhood v4 |
+|---|---|---|
+| raw growth | **+0.449 / +0.459 / +0.499** | **-0.175 / -0.192 / -0.222** |
+| raw exit rate | +0.431 / +0.428 / +0.433 | -0.247 / -0.238 / -0.241 |
+| raw HHI | -0.073 / -0.077 / -0.137 | +0.111 / +0.172 / +0.285 |
+
+**Every single input flips sign between the two chains.** That is the most
+important line in this document and it is not a flattering one.
+
+On Base, growth predicts more growth at +0.45 to +0.50, which is momentum plus
+the survivorship bias already admitted above: no token in that universe was
+allowed to be dead. On Robinhood, growth predicts *less* growth at -0.18 to
+-0.22, which is mean reversion in a launch curve, the same sign v1 found on the
+Base launch cohort. The split tracks cohort construction, not chain: survivor
+universes show momentum, unfiltered launch universes show reversion. Base v3 is
+the odd one out, and the thing that makes it odd is the selection rule, not the
+chain.
+
+Exit rate flips the same way and for the same reason. On the survivor cohort,
+churn is a liveness proxy (a token with any pool activity is still alive) so it
+correlates positively with forward holders. On the launch cohort, exits are
+exits: holders leaving precede fewer holders. The v3 text called the positive
+version "a liveness detector wearing a distribution-health costume", and the
+launch cohort is the control that confirms it.
+
+HHI flips too, and on the launch cohort it is the strongest raw input at k=14
+(+0.285): concentration *rising* precedes holder growth, because a token
+consolidating into a few committed wallets early is a token that has not been
+abandoned yet. On the survivor cohort that channel is absent.
+
+## What this means for the shipped instrument
+
+- **The one positive result in this project was cohort-specific.** Arm A's
+  +0.10 to +0.14 partial increment on Base survivors goes to zero on Robinhood
+  launches. One replication attempt, one failure. It should not be quoted as a
+  general property of the mapping, and the front page does not quote it.
+- **Arm B remains fully explained by its inputs on both chains.** It should not
+  be shipped as an instrument on either.
+- **The inputs themselves are not chain-portable.** Anyone who fits knees or
+  thresholds on one cohort and runs them on another is fitting the cohort. The
+  knees in this repo were set on Base distributions and were deliberately *not*
+  refitted for Robinhood, which is why the RH numbers are honest and weak rather
+  than tuned and impressive.
+- **What the worm is for.** It is a legible, deterministic rendering of three
+  public quantities, recomputable by anyone from a public RPC with no key. That
+  is a real thing and it is what colony.watch claims. It is not a predictor of
+  holder growth, on either chain tested, and this document is the reason to
+  believe that claim rather than the marketing one.
+
+Reproduce: `node engine/feed_v3.mjs && node engine/backtest_v3.mjs && node
+engine/partial_v3.mjs` against `data/snapshots_rh.json` for the Robinhood numbers
+and `data/snapshots_base_archive.json` for the Base ones. Ingest log for the
+corrected Robinhood run: `data/ingest_log_rh.txt`.

@@ -45,6 +45,9 @@ const state = {
   zoomTo: 1,          // wheel and buttons move this; zoom eases toward it
   zoomAt: { x: 0, y: 0 }, // cursor anchor, relative to canvas centre
   offset: { x: 0, y: 0 },
+  bounds: { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity },
+  autoScale: 6,                 // quantised fit, eased: never creeps
+  free: { cx: 0, cy: 0, scale: 6 },
   cells: [],
   drag: null,
 };
@@ -103,6 +106,8 @@ function loadEpoch(idx) {
   state.sim = createState();
   state.pos = createPosition();
   state.path = [{ x: 0, y: 0 }];
+  resetBounds();
+  state.autoScale = 0;                              // snap to the new epoch's fit
   state.tick = 0;
   state.fired = new Set();
   state.offset = { x: 0, y: 0 };
@@ -201,14 +206,58 @@ function paintBrainLine() {
 
 // --- canvases ----------------------------------------------------------------
 
+// Resizing a canvas clears it and forces a layout flush, so only touch the
+// backing store when the box actually changed. Doing this every frame was the
+// single biggest cost in the old loop.
+const _cv = new WeakMap();
 function fitCanvas(cv) {
-  const r = cv.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = Math.max(1, Math.round(r.width * dpr));
-  cv.height = Math.max(1, Math.round(r.height * dpr));
-  const ctx = cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { ctx, w: r.width, h: r.height };
+  let c = _cv.get(cv);
+  if (!c) {
+    c = { ctx: cv.getContext('2d', { alpha: false }), w: 0, h: 0, dpr: 0 };
+    _cv.set(cv, c);
+    const ro = new ResizeObserver(() => { c.dirty = true; });
+    ro.observe(cv);
+    c.dirty = true;
+  }
+  if (c.dirty) {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.w = r.width; c.h = r.height; c.dpr = dpr; c.dirty = false;
+    cv.width = Math.max(1, Math.round(r.width * dpr));
+    cv.height = Math.max(1, Math.round(r.height * dpr));
+    c.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  return { ctx: c.ctx, w: c.w, h: c.h };
+}
+
+/** Path bounds kept incrementally: O(1) per new point instead of O(n) per frame. */
+function resetBounds() {
+  state.bounds = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+  for (const p of state.path) growBounds(p);
+}
+function growBounds(p) {
+  const b = state.bounds;
+  if (p.x < b.x0) b.x0 = p.x; if (p.x > b.x1) b.x1 = p.x;
+  if (p.y < b.y0) b.y0 = p.y; if (p.y > b.y1) b.y1 = p.y;
+}
+
+/**
+ * Auto scale is quantised to a power of two ladder and held.
+ *
+ * The old code recomputed a raw fit every frame, so each new point the worm
+ * laid down nudged the extent and the camera crept outward forever: that was
+ * the slow drift. Snapping the fit to a discrete rung means the number stays
+ * put for long stretches and only ever changes when the trail genuinely
+ * outgrows the frame, and then it changes once, as one eased step.
+ */
+function autoScaleFor(w, h, headroom) {
+  const b = state.bounds;
+  if (!isFinite(b.x0)) return 6;
+  const pad = 90;
+  const raw = Math.min((w - pad * 2) / Math.max(b.x1 - b.x0, 1),
+                       (h - pad * 2) / Math.max(b.y1 - b.y0, 1)) * headroom;
+  const q = Math.pow(2, Math.floor(Math.log2(Math.max(raw, 1e-6))));
+  return Math.max(0.05, Math.min(q, 60));
 }
 
 function viewTransform(w, h) {
@@ -216,26 +265,18 @@ function viewTransform(w, h) {
   let scale = 6 * state.zoom;
   let cx = 0, cy = 0;
 
-  if (state.cam === 'fit' && path.length > 1) {
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-    for (const p of path) {
-      if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
-      if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
-    }
-    const pad = 90;
-    scale = Math.min((w - pad * 2) / Math.max(x1 - x0, 1), (h - pad * 2) / Math.max(y1 - y0, 1));
-    scale = Math.max(0.05, Math.min(scale, 60)) * state.zoom;
-    cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+  if (state.cam === 'free') {
+    // the free camera keeps whatever view it was handed, so switching into it
+    // never teleports the stage back to the origin
+    const f = state.free;
+    scale = f.scale * state.zoom;
+    cx = f.cx; cy = f.cy;
+  } else if (state.cam === 'fit' && path.length > 1) {
+    scale = state.autoScale * state.zoom;
+    cx = (state.bounds.x0 + state.bounds.x1) / 2;
+    cy = (state.bounds.y0 + state.bounds.y1) / 2;
   } else if (state.cam === 'follow' && path.length) {
-    // derive the follow scale from the path extent so the trail stays on canvas
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-    for (const p of path) {
-      if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
-      if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
-    }
-    const pad = 90;
-    const fit = Math.min((w - pad * 2) / Math.max(x1 - x0, 1), (h - pad * 2) / Math.max(y1 - y0, 1));
-    scale = Math.max(0.05, Math.min(fit * 1.6, 60)) * state.zoom;
+    scale = state.autoScale * state.zoom;
     const p = path[path.length - 1];
     cx = p.x; cy = p.y;
   }
@@ -413,6 +454,7 @@ function advance() {
   const out = stepPosition(state.pos, movement(state.sim.leftMuscle, state.sim.rightMuscle));
   state.pos = out.position;
   state.path.push({ x: out.position.x, y: out.position.y });
+  growBounds(out.position);
   state.tick++;
 
   // cells[] is neurons 0..298 then muscles 299..396, and the engine keeps those in
@@ -437,6 +479,25 @@ function advance() {
  * cursor pinned while it moves. The offset correction uses the zoom ratio,
  * which equals the scale ratio, so it holds in both fit and free camera.
  */
+/**
+ * Move the held fit toward its quantised target.
+ *
+ * The target only changes when the trail crosses a power of two boundary, so
+ * this is a no-op on the overwhelming majority of frames. When it does fire it
+ * is one short eased step, not the permanent outward creep it replaced.
+ */
+function easeAutoScale(dt) {
+  if (state.cam === 'free' || !state.path.length) return;
+  const c = _cv.get($('stage-canvas'));
+  if (!c || !c.w) return;
+  const target = autoScaleFor(c.w, c.h, state.cam === 'follow' ? 1.6 : 1);
+  if (!state.autoScale) { state.autoScale = target; return; }   // first frame: snap
+  if (Math.abs(target - state.autoScale) < state.autoScale * 1e-3) {
+    state.autoScale = target; return;
+  }
+  state.autoScale += (target - state.autoScale) * (1 - Math.exp(-9 * dt));
+}
+
 function easeZoom(dt) {
   const d = state.zoomTo - state.zoom;
   if (Math.abs(d) < state.zoom * 1e-4) { state.zoom = state.zoomTo; return; }
@@ -450,12 +511,21 @@ function easeZoom(dt) {
   state.offset.y = r * (state.offset.y - a.y) + a.y;
 }
 
+let enterFree = () => {};
+function markCam(mode) {
+  for (const m of ['follow', 'free', 'fit']) {
+    const el = $(`cam-${m}`);
+    if (el) el.setAttribute('aria-pressed', String(m === mode));
+  }
+}
+
 let last = 0;
 let prevTs = 0;
 function frame(ts) {
   const dt = Math.min((ts - prevTs) / 1000 || 0.016, 0.05); // clamp tab-switch gaps
   prevTs = ts;
   if (ts - last > 55) { advance(); last = ts; }
+  easeAutoScale(dt);
   easeZoom(dt);
   drawStage();
   if (state.brain) state.brain.draw();
@@ -465,12 +535,24 @@ function frame(ts) {
 // --- controls ----------------------------------------------------------------
 
 function wireControls() {
+  // hand the free camera exactly what is on screen right now, so entering it
+  // is invisible: same scale, same centre, and panning starts from here
+  enterFree = () => {                               // eslint-disable-line no-func-assign
+    if (state.cam === 'free') return;
+    const cvs = $('stage-canvas');
+    const r = cvs.getBoundingClientRect();
+    const v = viewTransform(r.width, r.height);
+    state.free = { cx: v.cx, cy: v.cy, scale: v.scale / state.zoom };
+    state.offset = { x: 0, y: 0 };
+    state.cam = 'free';
+    markCam('free');
+  };
+
   const setCam = (mode) => {
+    if (mode === 'free') { enterFree(); return; }
     state.cam = mode;
     state.offset = { x: 0, y: 0 };
-    for (const m of ['follow', 'free', 'fit']) {
-      $(`cam-${m}`).setAttribute('aria-pressed', String(m === mode));
-    }
+    markCam(mode);
   };
   $('cam-follow').onclick = () => setCam('follow');
   $('cam-free').onclick = () => setCam('free');
@@ -500,15 +582,20 @@ function wireControls() {
 
   const cv = $('stage-canvas');
   cv.addEventListener('pointerdown', (ev) => {
-    setCam('free');
-    state.drag = { x: ev.clientX, y: ev.clientY };
+    // do not switch camera here: a bare click used to drop straight into the
+    // free camera, which had its own origin, and the stage jumped back to 0,0
+    state.drag = { x: ev.clientX, y: ev.clientY, moved: 0 };
     cv.setPointerCapture(ev.pointerId);
   });
   cv.addEventListener('pointermove', (ev) => {
     if (!state.drag) return;
-    state.offset.x += ev.clientX - state.drag.x;
-    state.offset.y += ev.clientY - state.drag.y;
-    state.drag = { x: ev.clientX, y: ev.clientY };
+    const dx = ev.clientX - state.drag.x, dy = ev.clientY - state.drag.y;
+    state.drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (state.drag.moved < 3) { state.drag.x = ev.clientX; state.drag.y = ev.clientY; return; }
+    enterFree();                                    // adopts the current view, no jump
+    state.offset.x += dx;
+    state.offset.y += dy;
+    state.drag.x = ev.clientX; state.drag.y = ev.clientY;
   });
   cv.addEventListener('pointerup', () => { state.drag = null; });
   cv.addEventListener('wheel', (ev) => {

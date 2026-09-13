@@ -53,7 +53,7 @@
 </head>
 <body>
 <div class="page">
-  <a class="back" href="./index.html">← the instrument</a>
+  <a class="back" href="/">← the instrument</a>
   <div class="doc__social"><a class="xlink" href="https://x.com/neuroncolony" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>@neuroncolony</span></a></div>
   <h1 class="doc">Check it yourself</h1>
   <p>Nothing here asks you to trust the numbers on the front page. This page re-runs them. It loads the stored inputs, re-executes the same engine the site ships, and compares the result against the stored output field by field. Your browser does the work, so you can watch it in the network tab.</p>
@@ -83,31 +83,31 @@
   <div class="sec__sub">static json · same origin · no api</div>
 
   <div class="card">
-    <a class="card__path" href="./out/feed_v3.json">./out/feed_v3.json</a>
+    <a class="card__path" href="/sources">./out/feed_v3.json</a>
     <p class="card__desc">Per epoch, per token: the raw holder counts, the derived signal, the tick plan, and the resulting path efficiency. This is the file the checks above read.</p>
     <div class="card__size" data-size="./out/feed_v3.json">measuring…</div>
   </div>
 
   <div class="card">
-    <a class="card__path" href="./data/snapshots_v3.json">./data/snapshots_v3.json</a>
+    <a class="card__path" href="/sources">./data/snapshots_v3.json</a>
     <p class="card__desc">The chain snapshot itself: holder counts, entries, exits, concentration per token per block. The input Level 2 exists to challenge.</p>
     <div class="card__size" data-size="./data/snapshots_v3.json">measuring…</div>
   </div>
 
   <div class="card">
-    <a class="card__path" href="./out/backtest_v3.json">./out/backtest_v3.json</a>
+    <a class="card__path" href="/sources">./out/backtest_v3.json</a>
     <p class="card__desc">The 30 epoch back-test: both arms, all three forward horizons, bootstrapped confidence intervals.</p>
     <div class="card__size" data-size="./out/backtest_v3.json">measuring…</div>
   </div>
 
   <div class="card">
-    <a class="card__path" href="./out/partial_v3.json">./out/partial_v3.json</a>
+    <a class="card__path" href="/sources">./out/partial_v3.json</a>
     <p class="card__desc">Partial correlations, controlling each arm for the raw inputs it was computed from.</p>
     <div class="card__size" data-size="./out/partial_v3.json">measuring…</div>
   </div>
 
   <div class="card">
-    <a class="card__path" href="./data/connectome.json">./data/connectome.json</a>
+    <a class="card__path" href="/sources">./data/connectome.json</a>
     <p class="card__desc">The wiring. A clean room derivation of White et al. 1986, with its provenance block inside the file.</p>
     <div class="card__size" data-size="./data/connectome.json">measuring…</div>
   </div>

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-14T06:10:29.079Z",
+  "generated_utc": "2026-09-14T07:17:57.281Z",
   "cohort": {
     "file": "snapshots_v3.json",
     "chain": "robinhood",
@@ -19,244 +19,244 @@
     "exit_knee": 0.5,
     "sell_pressure_definition": "v3 exit rate (exits / prev holders), NOT v1 value-to-LP",
     "eligibility": "holder_count >= 10",
-    "scoring_epochs": 43
+    "scoring_epochs": 44
   },
-  "rows_scored": 1021,
+  "rows_scored": 1043,
   "tokens_scored": 30,
   "skipped": {
-    "too_small": 269,
+    "too_small": 277,
     "no_signal": 0
   },
   "degeneracy": {
     "note": "the v1 cohort failed here: 91.4% of rows were frozen on both inputs and the outcome",
-    "frozen_rows": 706,
-    "frozen_pct": 69.1,
-    "growth_zero_pct": 83.6,
-    "sell_zero_pct": 69.7
+    "frozen_rows": 723,
+    "frozen_pct": 69.3,
+    "growth_zero_pct": 83.8,
+    "sell_zero_pct": 69.9
   },
   "responsiveness": {
     "arm_a": {
-      "n": 315,
+      "n": 320,
       "min": 0.0757,
       "max": 1,
-      "median": 0.878,
-      "sd": 0.2787,
-      "distinct_values": 250
+      "median": 0.8795,
+      "sd": 0.2793,
+      "distinct_values": 253
     },
     "arm_b": {
-      "n": 1021,
+      "n": 1043,
       "min": 0.0088,
       "max": 0.9843,
       "median": 0.1845,
-      "sd": 0.1882,
-      "distinct_values": 349
+      "sd": 0.1874,
+      "distinct_values": 356
     },
     "arm_a_vs_growth": 0.608,
-    "arm_b_vs_hhi": -0.465,
-    "arm_b_vs_sell": 0.292,
-    "arm_b_growth_leak": 0.133,
-    "arm_a_vs_arm_b": 0.429
+    "arm_b_vs_hhi": -0.467,
+    "arm_b_vs_sell": 0.301,
+    "arm_b_growth_leak": 0.139,
+    "arm_a_vs_arm_b": 0.435
   },
   "horizons": {
     "k3": {
-      "n": 1021,
+      "n": 1043,
       "tokens": 30,
       "median_forward_change": 0,
-      "forward_zero_pct": 59.6,
+      "forward_zero_pct": 60,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 315,
+        "n": 320,
         "tokens": 30,
-        "spearman": 0.128,
-        "p_permutation": 0.0224,
+        "spearman": 0.13,
+        "p_permutation": 0.0188,
         "ci95_token_clustered": [
-          -0.002,
-          0.265
+          0.004,
+          0.262
         ],
-        "ci_excludes_zero": false
+        "ci_excludes_zero": true
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1021,
+        "n": 1043,
         "tokens": 30,
-        "spearman": -0.111,
+        "spearman": -0.107,
         "p_permutation": 0.0006,
         "ci95_token_clustered": [
-          -0.222,
-          0.036
+          -0.22,
+          0.043
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": -0.14,
+          "spearman": -0.133,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
             -0.338,
-            0.106
-          ],
-          "ci_excludes_zero": false
-        },
-        {
-          "field": "-sell",
-          "n": 1021,
-          "tokens": 30,
-          "spearman": 0.233,
-          "p_permutation": 0.0002,
-          "ci95_token_clustered": [
-            -0.002,
-            0.398
-          ],
-          "ci_excludes_zero": false
-        },
-        {
-          "field": "-hhi",
-          "n": 1021,
-          "tokens": 30,
-          "spearman": -0.115,
-          "p_permutation": 0.0002,
-          "ci95_token_clustered": [
-            -0.272,
-            0.097
-          ],
-          "ci_excludes_zero": false
-        }
-      ]
-    },
-    "k7": {
-      "n": 1021,
-      "tokens": 30,
-      "median_forward_change": 0,
-      "forward_zero_pct": 47.9,
-      "arm_a_full": {
-        "field": "pe_full",
-        "n": 315,
-        "tokens": 30,
-        "spearman": 0.109,
-        "p_permutation": 0.0568,
-        "ci95_token_clustered": [
-          -0.035,
-          0.261
-        ],
-        "ci_excludes_zero": false
-      },
-      "arm_b_nogrowth": {
-        "field": "pe_nogrowth",
-        "n": 1021,
-        "tokens": 30,
-        "spearman": -0.094,
-        "p_permutation": 0.0028,
-        "ci95_token_clustered": [
-          -0.219,
-          0.066
-        ],
-        "ci_excludes_zero": false
-      },
-      "raw_inputs": [
-        {
-          "field": "growth",
-          "n": 1021,
-          "tokens": 30,
-          "spearman": -0.152,
-          "p_permutation": 0.0002,
-          "ci95_token_clustered": [
-            -0.359,
             0.115
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": 0.226,
+          "spearman": 0.229,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.019,
-            0.402
+            -0.009,
+            0.395
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": -0.153,
-          "p_permutation": 0.0002,
+          "spearman": -0.111,
+          "p_permutation": 0.0004,
           "ci95_token_clustered": [
-            -0.35,
-            0.087
+            -0.27,
+            0.103
           ],
           "ci_excludes_zero": false
         }
       ]
     },
-    "k14": {
-      "n": 1021,
+    "k7": {
+      "n": 1043,
       "tokens": 30,
-      "median_forward_change": -0.0455,
-      "forward_zero_pct": 35.6,
+      "median_forward_change": 0,
+      "forward_zero_pct": 48.2,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 315,
+        "n": 320,
         "tokens": 30,
-        "spearman": 0.078,
-        "p_permutation": 0.1718,
+        "spearman": 0.11,
+        "p_permutation": 0.0476,
         "ci95_token_clustered": [
-          -0.099,
-          0.249
+          -0.027,
+          0.258
         ],
         "ci_excludes_zero": false
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1021,
+        "n": 1043,
         "tokens": 30,
-        "spearman": -0.141,
-        "p_permutation": 0.0002,
+        "spearman": -0.091,
+        "p_permutation": 0.0028,
         "ci95_token_clustered": [
-          -0.286,
-          0.048
+          -0.219,
+          0.07
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": -0.162,
+          "spearman": -0.145,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.401,
-            0.153
+            -0.355,
+            0.124
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": 0.23,
+          "spearman": 0.222,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.048,
-            0.43
+            -0.028,
+            0.399
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1021,
+          "n": 1043,
           "tokens": 30,
-          "spearman": -0.173,
+          "spearman": -0.148,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.412,
-            0.107
+            -0.347,
+            0.095
+          ],
+          "ci_excludes_zero": false
+        }
+      ]
+    },
+    "k14": {
+      "n": 1043,
+      "tokens": 30,
+      "median_forward_change": -0.0411,
+      "forward_zero_pct": 36,
+      "arm_a_full": {
+        "field": "pe_full",
+        "n": 320,
+        "tokens": 30,
+        "spearman": 0.081,
+        "p_permutation": 0.1518,
+        "ci95_token_clustered": [
+          -0.095,
+          0.247
+        ],
+        "ci_excludes_zero": false
+      },
+      "arm_b_nogrowth": {
+        "field": "pe_nogrowth",
+        "n": 1043,
+        "tokens": 30,
+        "spearman": -0.135,
+        "p_permutation": 0.0002,
+        "ci95_token_clustered": [
+          -0.281,
+          0.053
+        ],
+        "ci_excludes_zero": false
+      },
+      "raw_inputs": [
+        {
+          "field": "growth",
+          "n": 1043,
+          "tokens": 30,
+          "spearman": -0.155,
+          "p_permutation": 0.0002,
+          "ci95_token_clustered": [
+            -0.395,
+            0.16
+          ],
+          "ci_excludes_zero": false
+        },
+        {
+          "field": "-sell",
+          "n": 1043,
+          "tokens": 30,
+          "spearman": 0.224,
+          "p_permutation": 0.0002,
+          "ci95_token_clustered": [
+            -0.055,
+            0.425
+          ],
+          "ci_excludes_zero": false
+        },
+        {
+          "field": "-hhi",
+          "n": 1043,
+          "tokens": 30,
+          "spearman": -0.164,
+          "p_permutation": 0.0002,
+          "ci95_token_clustered": [
+            -0.402,
+            0.116
           ],
           "ci_excludes_zero": false
         }

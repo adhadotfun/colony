@@ -106,11 +106,23 @@ for (const t of [...ds.tokens].sort((a, b) => (a.token < b.token ? -1 : 1))) {
 }
 const snapshotRoot = createHash('sha256').update(snapshotRows.join('\n'), 'utf8').digest('hex');
 
+// Freshness is published as data, not as a claim. The site renders these three
+// numbers directly and turns the stamp red when the gap gets wide, so a stalled
+// ingest is visible to a visitor instead of looking like a live colony.
+const lastBlock = Math.max(...ds.tokens.map((t) => t.snapshots[t.snapshots.length - 1].block));
 const feed = {
   engine_version: '3',
   cohort_root: cohortRoot,
   n_epochs: nEpochs,
   epochs,
+  data_as_of: {
+    generated_utc: new Date().toISOString(),
+    head_block: ds.meta.head_block || null,
+    last_scored_block: lastBlock,
+    blocks_per_epoch: ds.meta.blocks_per_epoch || 35363,
+    confirmations: ds.meta.confirmations || null,
+    ingest_mode: ds.meta.ingest_mode || 'manual',
+  },
   connectome_sha256: connectomeSha,
   snapshots_sha256: snapshotsSha,
   snapshot_root: snapshotRoot,

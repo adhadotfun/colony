@@ -638,6 +638,29 @@ function wireControls() {
   });
 }
 
+function paintFreshness(feed) {
+  const el = $('asof');
+  const txt = $('asof-text');
+  if (!el || !txt) return;
+  const d = feed.data_as_of;
+  if (!d) { el.style.display = 'none'; return; }
+  const gen = d.generated_utc ? new Date(d.generated_utc) : null;
+  const ageMin = gen ? Math.max(0, Math.round((Date.now() - gen.getTime()) / 60000)) : null;
+  const behind = (d.head_block && d.last_scored_block) ? d.head_block - d.last_scored_block : null;
+  const parts = [];
+  parts.push(`block ${Number(d.last_scored_block).toLocaleString()}`);
+  if (ageMin !== null) parts.push(ageMin < 90 ? `${ageMin}m ago` : `${Math.round(ageMin / 60)}h ago`);
+  if (behind !== null) parts.push(`${Number(behind).toLocaleString()} behind`);
+  txt.textContent = `data as of ${parts.join(' · ')}`;
+  // one epoch is an hour of blocks; more than two epochs behind means the ingest stalled
+  const perEpoch = d.blocks_per_epoch || 35363;
+  const stale = (behind !== null && behind > perEpoch * 2) || (ageMin !== null && ageMin > 150);
+  el.classList.toggle('asof--stale', stale);
+  el.title = stale
+    ? 'the ingest is behind; these numbers are not current'
+    : 'how far behind the chain this page is';
+}
+
 // --- boot --------------------------------------------------------------------
 
 async function boot() {
@@ -647,6 +670,7 @@ async function boot() {
   ]);
   initConnectome(conn);
   state.feed = feed;
+  paintFreshness(feed);
   state.headBlock = Math.max(...feed.epochs.flatMap((e) => e.entries.map((x) => x.block)));
 
   const layout = await loadLayout('./data/cell_layout.json');

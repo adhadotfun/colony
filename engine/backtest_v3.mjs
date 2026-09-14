@@ -43,7 +43,10 @@ const DATA = resolve(HERE, '../data');
 const OUT = resolve(HERE, '../out');
 
 const HORIZONS = [3, 7, 14];
-const SCORING_EPOCHS = 30;
+// Scoring depth follows the data. It used to be pinned at 30, which silently
+// discarded every epoch the incremental ingest appended. An epoch is only
+// scoreable if its longest forward horizon has actually closed, so the cap is
+// (shortest token history) - max(HORIZONS).
 const MIN_HOLDERS = 10;
 const CFG = DEFAULT_SIGNAL_CONFIG;
 const GROWTH_KNEE = 0.10;
@@ -149,6 +152,9 @@ function main() {
 
   const scored = [];
   const skipped = { too_small: 0, no_signal: 0 };
+
+  const shortest = Math.min(...ds.tokens.map((t) => t.snapshots.length));
+  const SCORING_EPOCHS = Math.max(0, shortest - Math.max(...HORIZONS));
 
   for (let e = 0; e < SCORING_EPOCHS; e++) {
     const seed = epochSeed(cohortRoot, e);

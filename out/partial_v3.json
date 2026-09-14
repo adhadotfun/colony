@@ -1,38 +1,38 @@
 {
   "k3": {
-    "arm_b_partial": -0.071,
+    "arm_b_partial": -0.043,
     "arm_b_partial_ci": [
-      -0.17,
-      0.055
+      -0.145,
+      0.084
     ],
-    "arm_a_partial": 0.006,
+    "arm_a_partial": 0.062,
     "arm_a_partial_ci": [
-      -0.274,
-      0.239
+      -0.276,
+      0.292
     ]
   },
   "k7": {
-    "arm_b_partial": -0.051,
+    "arm_b_partial": -0.028,
     "arm_b_partial_ci": [
-      -0.136,
-      0.052
+      -0.148,
+      0.114
     ],
-    "arm_a_partial": -0.038,
+    "arm_a_partial": 0.063,
     "arm_a_partial_ci": [
-      -0.36,
-      0.21
+      -0.352,
+      0.305
     ]
   },
   "k14": {
-    "arm_b_partial": -0.143,
+    "arm_b_partial": -0.065,
     "arm_b_partial_ci": [
-      -0.285,
-      0.018
+      -0.178,
+      0.102
     ],
-    "arm_a_partial": -0.107,
+    "arm_a_partial": 0.075,
     "arm_a_partial_ci": [
-      -0.485,
-      0.185
+      -0.425,
+      0.332
     ]
   }
 }

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-14T15:08:13.696Z",
+  "generated_utc": "2026-09-14T16:09:44.978Z",
   "cohort": {
     "file": "snapshots_v3.json",
     "chain": "robinhood",
@@ -19,244 +19,244 @@
     "exit_knee": 0.5,
     "sell_pressure_definition": "v3 exit rate (exits / prev holders), NOT v1 value-to-LP",
     "eligibility": "holder_count >= 10",
-    "scoring_epochs": 52
+    "scoring_epochs": 53
   },
-  "rows_scored": 1219,
+  "rows_scored": 1241,
   "tokens_scored": 30,
   "skipped": {
-    "too_small": 341,
+    "too_small": 349,
     "no_signal": 0
   },
   "degeneracy": {
     "note": "the v1 cohort failed here: 91.4% of rows were frozen on both inputs and the outcome",
-    "frozen_rows": 870,
-    "frozen_pct": 71.4,
-    "growth_zero_pct": 85,
-    "sell_zero_pct": 71.9
+    "frozen_rows": 888,
+    "frozen_pct": 71.6,
+    "growth_zero_pct": 85.1,
+    "sell_zero_pct": 72.1
   },
   "responsiveness": {
     "arm_a": {
-      "n": 349,
+      "n": 353,
       "min": 0.0757,
       "max": 1,
-      "median": 0.8894,
-      "sd": 0.2749,
-      "distinct_values": 273
+      "median": 0.8907,
+      "sd": 0.2744,
+      "distinct_values": 274
     },
     "arm_b": {
-      "n": 1219,
+      "n": 1241,
       "min": 0.0088,
       "max": 0.9843,
       "median": 0.1845,
-      "sd": 0.188,
-      "distinct_values": 403
+      "sd": 0.1885,
+      "distinct_values": 410
     },
-    "arm_a_vs_growth": 0.612,
-    "arm_b_vs_hhi": -0.491,
-    "arm_b_vs_sell": 0.335,
-    "arm_b_growth_leak": 0.168,
-    "arm_a_vs_arm_b": 0.453
+    "arm_a_vs_growth": 0.614,
+    "arm_b_vs_hhi": -0.494,
+    "arm_b_vs_sell": 0.339,
+    "arm_b_growth_leak": 0.172,
+    "arm_a_vs_arm_b": 0.456
   },
   "horizons": {
     "k3": {
-      "n": 1219,
+      "n": 1241,
       "tokens": 30,
       "median_forward_change": 0,
-      "forward_zero_pct": 62.4,
+      "forward_zero_pct": 62.7,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 349,
+        "n": 353,
         "tokens": 30,
-        "spearman": 0.132,
-        "p_permutation": 0.0158,
+        "spearman": 0.133,
+        "p_permutation": 0.0116,
         "ci95_token_clustered": [
-          0.005,
+          0.006,
           0.27
         ],
         "ci_excludes_zero": true
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1219,
+        "n": 1241,
         "tokens": 30,
-        "spearman": -0.095,
-        "p_permutation": 0.0016,
+        "spearman": -0.093,
+        "p_permutation": 0.0008,
         "ci95_token_clustered": [
-          -0.212,
-          0.056
+          -0.213,
+          0.062
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.113,
-          "p_permutation": 0.0002,
+          "spearman": -0.112,
+          "p_permutation": 0.0004,
           "ci95_token_clustered": [
             -0.33,
-            0.148
+            0.151
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": 0.208,
+          "spearman": 0.207,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.045,
-            0.388
+            -0.051,
+            0.387
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.083,
-          "p_permutation": 0.004,
+          "spearman": -0.078,
+          "p_permutation": 0.0064,
           "ci95_token_clustered": [
-            -0.248,
-            0.133
+            -0.244,
+            0.142
           ],
           "ci_excludes_zero": false
         }
       ]
     },
     "k7": {
-      "n": 1219,
+      "n": 1241,
       "tokens": 30,
       "median_forward_change": 0,
-      "forward_zero_pct": 50.6,
+      "forward_zero_pct": 51.1,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 349,
+        "n": 353,
         "tokens": 30,
-        "spearman": 0.107,
-        "p_permutation": 0.0462,
+        "spearman": 0.11,
+        "p_permutation": 0.0362,
         "ci95_token_clustered": [
-          -0.02,
-          0.254
+          -0.016,
+          0.252
         ],
         "ci_excludes_zero": false
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1219,
+        "n": 1241,
         "tokens": 30,
-        "spearman": -0.073,
-        "p_permutation": 0.0096,
+        "spearman": -0.07,
+        "p_permutation": 0.0116,
         "ci95_token_clustered": [
-          -0.213,
-          0.1
+          -0.212,
+          0.105
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.116,
+          "spearman": -0.113,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.344,
-            0.175
+            -0.343,
+            0.181
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": 0.2,
+          "spearman": 0.198,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.072,
-            0.389
+            -0.077,
+            0.39
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.103,
-          "p_permutation": 0.0008,
+          "spearman": -0.097,
+          "p_permutation": 0.0016,
           "ci95_token_clustered": [
-            -0.314,
-            0.154
+            -0.31,
+            0.161
           ],
           "ci_excludes_zero": false
         }
       ]
     },
     "k14": {
-      "n": 1219,
+      "n": 1241,
       "tokens": 30,
-      "median_forward_change": -0.0294,
-      "forward_zero_pct": 39.5,
+      "median_forward_change": -0.0274,
+      "forward_zero_pct": 40,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 349,
+        "n": 353,
         "tokens": 30,
-        "spearman": 0.088,
-        "p_permutation": 0.0992,
+        "spearman": 0.092,
+        "p_permutation": 0.0788,
         "ci95_token_clustered": [
-          -0.075,
-          0.246
+          -0.073,
+          0.249
         ],
         "ci_excludes_zero": false
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1219,
+        "n": 1241,
         "tokens": 30,
-        "spearman": -0.107,
-        "p_permutation": 0.0006,
+        "spearman": -0.104,
+        "p_permutation": 0.0002,
         "ci95_token_clustered": [
-          -0.264,
-          0.089
+          -0.263,
+          0.095
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.127,
+          "spearman": -0.125,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.385,
-            0.206
+            -0.383,
+            0.209
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": 0.205,
+          "spearman": 0.202,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.095,
+            -0.099,
             0.421
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1219,
+          "n": 1241,
           "tokens": 30,
-          "spearman": -0.105,
-          "p_permutation": 0.0008,
+          "spearman": -0.1,
+          "p_permutation": 0.001,
           "ci95_token_clustered": [
-            -0.35,
-            0.177
+            -0.347,
+            0.183
           ],
           "ci_excludes_zero": false
         }

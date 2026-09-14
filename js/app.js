@@ -573,7 +573,7 @@ function wireControls() {
 
   // Colony's own token. Leave COLONY_CA empty until the coin is live: the pill
   // then reads "no ca yet" and is inert instead of copying a placeholder.
-  const COLONY_CA = '';
+  const COLONY_CA = '0xb19fc70efcfc999503d9d77fb5d050a0e8def25b';
   const caBtn = $('ca'), caAddr = $('ca-addr'), caAct = $('ca-act');
   if (COLONY_CA) {
     caBtn.classList.remove('contract--empty');

@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-09-14T09:09:26.275Z",
+  "generated_utc": "2026-09-14T10:08:33.453Z",
   "cohort": {
     "file": "snapshots_v3.json",
     "chain": "robinhood",
@@ -19,244 +19,244 @@
     "exit_knee": 0.5,
     "sell_pressure_definition": "v3 exit rate (exits / prev holders), NOT v1 value-to-LP",
     "eligibility": "holder_count >= 10",
-    "scoring_epochs": 46
+    "scoring_epochs": 47
   },
-  "rows_scored": 1087,
+  "rows_scored": 1109,
   "tokens_scored": 30,
   "skipped": {
-    "too_small": 293,
+    "too_small": 301,
     "no_signal": 0
   },
   "degeneracy": {
     "note": "the v1 cohort failed here: 91.4% of rows were frozen on both inputs and the outcome",
-    "frozen_rows": 761,
-    "frozen_pct": 70,
+    "frozen_rows": 780,
+    "frozen_pct": 70.3,
     "growth_zero_pct": 84.2,
-    "sell_zero_pct": 70.6
+    "sell_zero_pct": 70.9
   },
   "responsiveness": {
     "arm_a": {
-      "n": 326,
+      "n": 329,
       "min": 0.0757,
       "max": 1,
-      "median": 0.8808,
-      "sd": 0.2781,
-      "distinct_values": 256
+      "median": 0.8804,
+      "sd": 0.2782,
+      "distinct_values": 259
     },
     "arm_b": {
-      "n": 1087,
+      "n": 1109,
       "min": 0.0088,
       "max": 0.9843,
       "median": 0.1845,
-      "sd": 0.1867,
-      "distinct_values": 368
+      "sd": 0.1858,
+      "distinct_values": 374
     },
-    "arm_a_vs_growth": 0.61,
-    "arm_b_vs_hhi": -0.473,
-    "arm_b_vs_sell": 0.309,
-    "arm_b_growth_leak": 0.147,
+    "arm_a_vs_growth": 0.615,
+    "arm_b_vs_hhi": -0.476,
+    "arm_b_vs_sell": 0.313,
+    "arm_b_growth_leak": 0.152,
     "arm_a_vs_arm_b": 0.439
   },
   "horizons": {
     "k3": {
-      "n": 1087,
+      "n": 1109,
       "tokens": 30,
       "median_forward_change": 0,
-      "forward_zero_pct": 60.6,
+      "forward_zero_pct": 60.9,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 326,
+        "n": 329,
         "tokens": 30,
-        "spearman": 0.136,
-        "p_permutation": 0.0138,
+        "spearman": 0.131,
+        "p_permutation": 0.0182,
         "ci95_token_clustered": [
-          0.016,
-          0.266
+          0.008,
+          0.263
         ],
         "ci_excludes_zero": true
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1087,
+        "n": 1109,
         "tokens": 30,
-        "spearman": -0.106,
+        "spearman": -0.103,
         "p_permutation": 0.0006,
         "ci95_token_clustered": [
-          -0.221,
-          0.052
+          -0.218,
+          0.055
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.128,
+          "spearman": -0.118,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.338,
-            0.13
+            -0.333,
+            0.139
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": 0.224,
+          "spearman": 0.216,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.025,
-            0.397
+            -0.036,
+            0.393
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.103,
-          "p_permutation": 0.0014,
+          "spearman": -0.095,
+          "p_permutation": 0.0008,
           "ci95_token_clustered": [
-            -0.263,
-            0.116
+            -0.258,
+            0.125
           ],
           "ci_excludes_zero": false
         }
       ]
     },
     "k7": {
-      "n": 1087,
+      "n": 1109,
       "tokens": 30,
       "median_forward_change": 0,
-      "forward_zero_pct": 48.8,
+      "forward_zero_pct": 49.1,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 326,
+        "n": 329,
         "tokens": 30,
-        "spearman": 0.115,
-        "p_permutation": 0.0418,
+        "spearman": 0.11,
+        "p_permutation": 0.0454,
         "ci95_token_clustered": [
-          -0.019,
+          -0.024,
           0.258
         ],
         "ci_excludes_zero": false
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1087,
+        "n": 1109,
         "tokens": 30,
-        "spearman": -0.087,
-        "p_permutation": 0.0044,
+        "spearman": -0.084,
+        "p_permutation": 0.0058,
         "ci95_token_clustered": [
-          -0.22,
-          0.077
+          -0.218,
+          0.082
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.139,
+          "spearman": -0.13,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.355,
-            0.137
+            -0.346,
+            0.148
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": 0.218,
+          "spearman": 0.211,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.035,
-            0.398
+            -0.045,
+            0.393
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.137,
+          "spearman": -0.13,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.34,
-            0.11
+            -0.336,
+            0.119
           ],
           "ci_excludes_zero": false
         }
       ]
     },
     "k14": {
-      "n": 1087,
+      "n": 1109,
       "tokens": 30,
-      "median_forward_change": -0.0392,
-      "forward_zero_pct": 36.7,
+      "median_forward_change": -0.0333,
+      "forward_zero_pct": 37.2,
       "arm_a_full": {
         "field": "pe_full",
-        "n": 326,
+        "n": 329,
         "tokens": 30,
-        "spearman": 0.089,
-        "p_permutation": 0.1202,
+        "spearman": 0.084,
+        "p_permutation": 0.1344,
         "ci95_token_clustered": [
-          -0.082,
-          0.247
+          -0.086,
+          0.246
         ],
         "ci_excludes_zero": false
       },
       "arm_b_nogrowth": {
         "field": "pe_nogrowth",
-        "n": 1087,
+        "n": 1109,
         "tokens": 30,
-        "spearman": -0.126,
+        "spearman": -0.122,
         "p_permutation": 0.0002,
         "ci95_token_clustered": [
-          -0.273,
-          0.061
+          -0.27,
+          0.065
         ],
         "ci_excludes_zero": false
       },
       "raw_inputs": [
         {
           "field": "growth",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.148,
+          "spearman": -0.142,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.395,
-            0.173
+            -0.388,
+            0.18
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-sell",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": 0.219,
+          "spearman": 0.214,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.067,
-            0.424
+            -0.075,
+            0.423
           ],
           "ci_excludes_zero": false
         },
         {
           "field": "-hhi",
-          "n": 1087,
+          "n": 1109,
           "tokens": 30,
-          "spearman": -0.145,
+          "spearman": -0.137,
           "p_permutation": 0.0002,
           "ci95_token_clustered": [
-            -0.385,
-            0.135
+            -0.378,
+            0.143
           ],
           "ci_excludes_zero": false
         }
